@@ -1,18 +1,18 @@
 import torch
 
-from abc import abstractmethod, ABC
+from abc import abstractmethod, abstractproperty, ABC
 
 # import the point cloud backbones
-from backbones.point_cloud import PointCloudBackbone
+from voxel_transformer.backbones.point_cloud.point_cloud_backbone import PointCloudBackbone
 
 # import the rgbd backbones
-from backbones.rgbd import RGBDBackbone
+from voxel_transformer.backbones.rgbd.rgbd_backbone import RGBDBackbone
 
 # import the necks
-from necks import Neck
+from voxel_transformer.necks.neck import Neck
 
 # import the heads
-from heads import Head
+from voxel_transformer.heads.head import Head
 
 # Abstract voxel transformer implementation. Can have any combination of backbones, neck and heads.
 class AbstractVoxelTransformer(ABC, torch.nn.Module):
