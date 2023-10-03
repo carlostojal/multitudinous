@@ -6,4 +6,7 @@ from voxel_transformer.heads.head import Head
 
 class DeconvolutionalHead(Head):
     
-    pass
+    def forward(self, fused_features):
+        print("Deconvolutional head forward")
+
+        pass
