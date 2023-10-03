@@ -1,6 +1,7 @@
 import torch
 
-from abc import abstractmethod, abstractproperty, ABC
+from abc import abstractmethod, ABC
+from typing import Type, TypeVar, Generic
 
 # import the point cloud backbones
 from voxel_transformer.backbones.point_cloud.point_cloud_backbone import PointCloudBackbone
@@ -14,28 +15,15 @@ from voxel_transformer.necks.neck import Neck
 # import the heads
 from voxel_transformer.heads.head import Head
 
+# define abstract types bound to the abstract networks
+PointCloudBackboneT = TypeVar('PointCloudBackboneT', bound=PointCloudBackbone)
+RGBDBackboneT = TypeVar('RGBDBackboneT', bound=RGBDBackbone)
+NeckT = TypeVar('NeckT', bound=Neck)
+HeadT = TypeVar('HeadT', bound=Head)
+
+
 # Abstract voxel transformer implementation. Can have any combination of backbones, neck and heads.
-class AbstractVoxelTransformer(ABC, torch.nn.Module):
-
-    @property
-    @abstractmethod
-    def point_cloud_backbone(self) -> PointCloudBackbone:
-        pass
-
-    @property
-    @abstractmethod
-    def rgbd_backbone(self) -> RGBDBackbone:
-        pass
-
-    @property
-    @abstractmethod
-    def neck(self) -> Neck:
-        pass
-
-    @property
-    @abstractmethod
-    def occupancy_head(self) -> Head:
-        pass
+class AbstractVoxelTransformer(ABC, torch.nn.Module, Generic[PointCloudBackboneT, RGBDBackboneT, NeckT, HeadT]):
 
     def forward(self, point_cloud, rgbd):
 
