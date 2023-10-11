@@ -13,7 +13,6 @@ class SE(torch.nn.Module):
         super().__init__()
 
         # -- squeeze --
-        # TODO: review kernel sizes and stride
         if pooling_method == PoolingMethod.MAX_POOL:
             self.pool = torch.nn.MaxPool2d(in_size)
         elif pooling_method == PoolingMethod.AVG_POOL:
@@ -34,3 +33,17 @@ class SE(torch.nn.Module):
 
         # sigmoid activation
         self.sigmoid = torch.nn.Sigmoid()
+
+    def forward(self, x):
+
+        # squeeze
+        x = self.pool(x)
+
+        # excitation
+        x = self.fc1(x)
+        x = self.relu(x)
+        x = self.fc2(x)
+        x = self.sigmoid(x)
+
+        return x
+    
