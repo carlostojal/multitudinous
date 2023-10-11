@@ -1,6 +1,8 @@
 import torch
-from abc import ABC
+from abc import ABC, abstractmethod
 
 class Head(ABC, torch.nn.Module):
-    
-    pass
+
+    @abstractmethod
+    def forward(self, fused_features):
+        pass

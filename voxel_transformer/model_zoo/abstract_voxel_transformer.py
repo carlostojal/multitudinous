@@ -1,6 +1,8 @@
 import torch
 
-from abc import abstractmethod, abstractproperty, ABC
+from abc import abstractmethod, ABC
+from typing import Type, TypeVar, Generic
+from threading import Thread
 
 # import the point cloud backbones
 from voxel_transformer.backbones.point_cloud.point_cloud_backbone import PointCloudBackbone
@@ -14,36 +16,42 @@ from voxel_transformer.necks.neck import Neck
 # import the heads
 from voxel_transformer.heads.head import Head
 
+# define abstract types bound to the abstract networks
+PointCloudBackboneT = TypeVar('PointCloudBackboneT', bound=PointCloudBackbone)
+RGBDBackboneT = TypeVar('RGBDBackboneT', bound=RGBDBackbone)
+NeckT = TypeVar('NeckT', bound=Neck)
+HeadT = TypeVar('HeadT', bound=Head)
+
+
 # Abstract voxel transformer implementation. Can have any combination of backbones, neck and heads.
-class AbstractVoxelTransformer(ABC, torch.nn.Module):
-
-    @property
-    @abstractmethod
-    def point_cloud_backbone(self) -> PointCloudBackbone:
-        pass
-
-    @property
-    @abstractmethod
-    def rgbd_backbone(self) -> RGBDBackbone:
-        pass
-
-    @property
-    @abstractmethod
-    def neck(self) -> Neck:
-        pass
-
-    @property
-    @abstractmethod
-    def occupancy_head(self) -> Head:
-        pass
+class AbstractVoxelTransformer(ABC, torch.nn.Module, Generic[PointCloudBackboneT, RGBDBackboneT, NeckT, HeadT]):
 
     def forward(self, point_cloud, rgbd):
 
-        # extract point cloud features using the point cloud backbone
-        point_cloud_features = self.point_cloud_backbone(point_cloud)
+        point_cloud_features = None
+        rgbd_features = None
 
-        # extract rgbd features using the rgbd backbone
-        rgbd_features = self.rgbd_backbone(rgbd)
+        # a routine to extract point cloud features
+        def run_point_cloud_backbone():
+            nonlocal point_cloud_features
+            point_cloud_features = self.point_cloud_backbone(point_cloud)
+
+        # a routine to extract rgbd features
+        def run_rgbd_backbone():
+            nonlocal rgbd_features
+            rgbd_features = self.rgbd_backbone(rgbd)
+
+        # create a thread to extract point cloud features and another to extract rgbd features
+        point_cloud_thread = Thread(target=run_point_cloud_backbone)
+        rgbd_thread = Thread(target=run_rgbd_backbone)
+
+        # start the threads concurrently
+        point_cloud_thread.start()
+        rgbd_thread.start()
+
+        # wait for the threads
+        point_cloud_thread.join()
+        rgbd_thread.join()
 
         # fuse the features using the neck
         fused_features = self.neck(point_cloud_features, rgbd_features)

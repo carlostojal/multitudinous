@@ -4,4 +4,7 @@ from voxel_transformer.backbones.point_cloud.point_cloud_backbone import PointCl
 # Point cloud backbone using the "Point Transformer" architecture.
 class PointTransformer(PointCloudBackbone):
 
-    pass
+    def forward(self, point_cloud):
+        print("PointTransformer forward")
+
+        pass
