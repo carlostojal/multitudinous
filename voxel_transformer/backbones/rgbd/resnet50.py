@@ -6,7 +6,7 @@ from voxel_transformer.backbones.rgbd.rgbd_backbone import RGBDBackbone
 # residual block class
 class ResBlock(torch.nn.Module):
 
-    def __init__(self, input_size: int, first_layer_stride: int = 1):
+    def __init__(self, input_size: int, first_layer_stride: int = 1, attention_module: torch.nn.Module = None):
         super().__init__()
 
         self.expansion: int = 4
@@ -14,6 +14,8 @@ class ResBlock(torch.nn.Module):
         self.input_size: int = input_size
 
         self.block = BottleneckBlock(input_size, first_layer_stride)
+
+        self.attention = attention_module
 
     def forward(self, x: torch.Tensor):
 
@@ -27,6 +29,13 @@ class ResBlock(torch.nn.Module):
         if self.input_size * self.expansion != x_in.size(dim=0):
             # adapt dimensions with a 1x1 conv layer
             x = torch.nn.Conv2d(in_channels=x.size(dim=0), out_channels=self.input_size * self.expansion, kernel_size=1)
+
+        # if an attention module was set
+        if self.attention != None:
+            # compute attention
+            x_attn = self.attention(x)
+            # apply attention
+            x *= x_attn
 
         # concatenate the new feature map and the residual connection
         return x + x_in
@@ -77,7 +86,7 @@ class BottleneckBlock(torch.nn.Module):
 class ResNet50(RGBDBackbone):
 
     # feature_len is the output feature vector length
-    def __init__(self, feature_len: int):
+    def __init__(self, feature_len: int, attention_module: torch.nn.Module = None):
         super().__init__()
 
         # the first layer has 4 input channels (RGBD)
@@ -102,7 +111,7 @@ class ResNet50(RGBDBackbone):
             for block in range(block_count):
 
                 # create a bottleneck block
-                self.conv_blocks.append(ResBlock(input_size, first_layer_stride=stride))
+                self.conv_blocks.append(ResBlock(input_size, first_layer_stride=stride, attention_module=attention_module))
 
                 stride = 1
 
