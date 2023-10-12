@@ -26,5 +26,17 @@ class CBAM(torch.nn.Module):
         f_avg1 = self.sigmoid(self.fc2(self.fc1(f_avg)))
         f_max1 = self.fc2(self.fc1(f_max))
 
+        # compute channel attention
+        channel_attention = f_avg1 + f_max1
+
+        # compute spatial attention
         # concatenating on channel 0 generates a tensor of 2xWxH
-        return self.sigmoid(self.conv1(torch.cat((f_avg, f_max), dim=0)))
+        spatial_attention = self.sigmoid(self.conv1(torch.cat((f_avg, f_max), dim=0)))
+
+        # apply channel attention
+        x *= channel_attention
+
+        # apply spatial attention
+        x *= spatial_attention
+
+        return x
