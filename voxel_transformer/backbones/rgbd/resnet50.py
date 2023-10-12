@@ -77,7 +77,7 @@ class BottleneckBlock(torch.nn.Module):
 class ResNet50(RGBDBackbone):
 
     # feature_len is the output feature vector length
-    def __init__(self, feature_len: int):
+    def __init__(self, out_feature_len: int):
         super().__init__()
 
         # the first layer has 4 input channels (RGBD)
@@ -102,14 +102,14 @@ class ResNet50(RGBDBackbone):
             for block in range(block_count):
 
                 # create a bottleneck block
-                self.conv_blocks.append(ResBlock(input_size, first_layer_stride=stride))
+                self.res_blocks.append(ResBlock(input_size, first_layer_stride=stride))
 
                 stride = 1
 
             input_size *= 2
 
         self.avgpool = torch.nn.AdaptiveAvgPool2d((1, 1))
-        self.fc = torch.nn.Linear(1024, feature_len)
+        self.fc = torch.nn.Linear(1024, out_feature_len)
 
         self.softmax = torch.nn.Softmax2d()
 
@@ -117,7 +117,7 @@ class ResNet50(RGBDBackbone):
 
         # input shape must be 3x224x224
         if rgbd.size() != (3, 224, 224):
-            raise RuntimeError("Invalid RGB-D tensor shape: must be 3x224x224!")
+            raise RuntimeError("Invalid RGB-D tensor shape: must be 3x224x224! ({} was provided)".format(rgbd.size()))
 
         x = self.bn1(rgbd)
         x = self.conv1(x)
