@@ -115,6 +115,10 @@ class ResNet50(RGBDBackbone):
 
     def forward(self, rgbd: torch.Tensor) -> torch.Tensor:
 
+        # input shape must be 3x224x224
+        if rgbd.size() != (3, 224, 224):
+            raise RuntimeError("Invalid RGB-D tensor shape: must be 3x224x224!")
+
         x = self.bn1(rgbd)
         x = self.conv1(x)
 
