@@ -23,6 +23,6 @@ class VoxelTransformer_ResNet50(AbstractVoxelTransformer[PointTransformer, ResNe
         super().__init__()
 
         self.point_cloud_backbone = PointTransformer()
-        self.rgbd_backbone = ResNet50()
+        self.rgbd_backbone = ResNet50(out_feature_len=1000)
         self.neck = ConcatNeck()
         self.occupancy_head = DeconvolutionalHead()
