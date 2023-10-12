@@ -25,10 +25,13 @@ class ResBlock(torch.nn.Module):
         self.expansion: int = 4
 
         self.in_channels: int = in_channels
+        self.out_channels: int = in_channels * self.expansion
 
         self.stride = stride
 
         self.block = BottleneckBlock(in_channels, true_in_channels, stride)
+
+        self.shortcut = Shortcut(in_channels=true_in_channels, out_channels=self.out_channels, stride=stride)
 
         self.sigmoid = torch.nn.Sigmoid()
 
@@ -41,8 +44,7 @@ class ResBlock(torch.nn.Module):
         x = self.block(x)
 
         # adapt dimensions with a 1x1 conv layer
-        shortcut = Shortcut(residual.size(dim=1), x.size(dim=1), stride=self.stride)
-        residual = shortcut(residual)
+        residual = self.shortcut(residual)
 
         # concatenate the new feature map and the residual connection
         return self.sigmoid(x + residual)
