@@ -26,7 +26,7 @@ HeadT = TypeVar('HeadT', bound=Head)
 # Abstract voxel transformer implementation. Can have any combination of backbones, neck and heads.
 class AbstractVoxelTransformer(ABC, torch.nn.Module, Generic[PointCloudBackboneT, RGBDBackboneT, NeckT, HeadT]):
 
-    def forward(self, point_cloud, rgbd):
+    def forward(self, point_cloud: torch.Tensor, rgbd: torch.Tensor) -> torch.Tensor:
 
         point_cloud_features = None
         rgbd_features = None
