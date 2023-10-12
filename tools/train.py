@@ -7,11 +7,13 @@ if __name__ == "__main__":
 
     model = VoxelTransformer_ResNet50()
 
+    print(model)
+
     # TODO
 
     # generate random input tensors
     random_pcl = torch.rand((1, 10000))
-    random_rgbd = torch.rand((3, 224, 224))
+    random_rgbd = torch.rand((1, 4, 224, 224))
 
     # test forward pass with random tensors (with correct dimensions)
     out = model(random_pcl, random_rgbd)
