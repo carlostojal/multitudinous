@@ -3,6 +3,8 @@ from voxel_transformer.backbones.rgbd.rgbd_backbone import RGBDBackbone
 from typing import Generic, TypeVar
 from abc import ABC
 from voxel_transformer.backbones.rgbd.attention.abstract_attention import AbstractAttention
+from voxel_transformer.backbones.rgbd.attention.squeeze_and_excitation import SE, SEPoolingMethod
+from voxel_transformer.backbones.rgbd.attention.convolutional_block_attention_module import CBAM
 
 # RGBD backbone using the "ResNet 50" architecture - convolutional.
 
@@ -41,12 +43,15 @@ class ResBlock(torch.nn.Module, Generic[AbstractAttentionT]):
 
         self.sigmoid = torch.nn.Sigmoid()
 
-        if AbstractAttentionT is not None:
-            self.attention = AbstractAttentionT()
-        else:
-            self.attention = None
+        match AbstractAttentionT:
+            case type(SE(self.out_channels)):
+                self.attention = SE(true_in_channels, 2, SEPoolingMethod.AVG_POOL)
+            case type(CBAM(self.out_channels)):
+                self.attention = CBAM(true_in_channels, 2)
+            case _:
+                self.attention = None
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
 
         # save the residual value
         residual: torch.Tensor = x
@@ -114,7 +119,7 @@ class BottleneckBlock(torch.nn.Module):
         return x
 
 
-class AbstractResNet50(ABC, RGBDBackbone, Generic[AbstractAttentionT]):
+class AbstractResNet50(RGBDBackbone, Generic[AbstractAttentionT]):
 
     # feature_len is the output feature vector length
     def __init__(self, out_feature_len: int):
