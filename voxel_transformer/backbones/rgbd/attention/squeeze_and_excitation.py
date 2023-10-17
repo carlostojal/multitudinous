@@ -1,13 +1,16 @@
 import torch
 from enum import Enum
+from abstract_attention import AbstractAttention
 
 # Squeeze-and-excitation attention module immplementation
+
 
 class PoolingMethod(Enum):
     MAX_POOL = 1
     AVG_POOL = 2
 
-class SE(torch.nn.Module):
+
+class SE(AbstractAttention):
 
     def __init__(self, in_size: int, reduction_ratio: float, pooling_method: PoolingMethod):
         super().__init__()
