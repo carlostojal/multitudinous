@@ -5,8 +5,12 @@ from voxel_transformer.backbones.rgbd.attention.abstract_attention import Abstra
 
 
 class CBAM(AbstractAttention):
-    def __init__(self, in_size: int, reduction_ratio: float):
-        super().__init__()
+    def __init__(self, in_size: int):
+        super().__init__(in_size)
+
+        # -- hyperparameters --
+        reduction_ratio = 2.0
+
 
         # -- channel attention module
         # max and avg pool

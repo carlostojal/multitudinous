@@ -12,8 +12,15 @@ class SEPoolingMethod(Enum):
 
 class SE(AbstractAttention):
 
-    def __init__(self, in_size: int, reduction_ratio: float, pooling_method: SEPoolingMethod):
-        super().__init__()
+    def __init__(self, in_size: int):
+        super().__init__(in_size)
+
+        # -- hyperparameters --
+
+        # set the pooling method
+        pooling_method = SEPoolingMethod.AVG_POOL
+        # set the reduction ratio
+        reduction_ratio = 2.0
 
         # -- squeeze --
         if pooling_method == SEPoolingMethod.MAX_POOL:
@@ -49,4 +56,3 @@ class SE(AbstractAttention):
         x = self.sigmoid(x)
 
         return x
-    
