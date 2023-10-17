@@ -1,8 +1,10 @@
 import torch
+from abstract_attention import AbstractAttention
 
 # "Convolutional Block Attention Module" attention
 
-class CBAM(torch.nn.Module):
+
+class CBAM(AbstractAttention):
     def __init__(self, in_size: int, reduction_ratio: float):
         super().__init__()
 
