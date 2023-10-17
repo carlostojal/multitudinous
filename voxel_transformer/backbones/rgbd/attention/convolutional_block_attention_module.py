@@ -1,5 +1,5 @@
 import torch
-from abstract_attention import AbstractAttention
+from voxel_transformer.backbones.rgbd.attention.abstract_attention import AbstractAttention
 
 # "Convolutional Block Attention Module" attention
 
