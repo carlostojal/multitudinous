@@ -1,24 +1,24 @@
 import torch
 from enum import Enum
-from abstract_attention import AbstractAttention
+from voxel_transformer.backbones.rgbd.attention.abstract_attention import AbstractAttention
 
 # Squeeze-and-excitation attention module immplementation
 
 
-class PoolingMethod(Enum):
+class SEPoolingMethod(Enum):
     MAX_POOL = 1
     AVG_POOL = 2
 
 
 class SE(AbstractAttention):
 
-    def __init__(self, in_size: int, reduction_ratio: float, pooling_method: PoolingMethod):
+    def __init__(self, in_size: int, reduction_ratio: float, pooling_method: SEPoolingMethod):
         super().__init__()
 
         # -- squeeze --
-        if pooling_method == PoolingMethod.MAX_POOL:
+        if pooling_method == SEPoolingMethod.MAX_POOL:
             self.pool = torch.nn.MaxPool2d(in_size)
-        elif pooling_method == PoolingMethod.AVG_POOL:
+        elif pooling_method == SEPoolingMethod.AVG_POOL:
             self.pool = torch.nn.AvgPool2d(in_size)
         else:
             raise Exception("Pooling method not supported!")
