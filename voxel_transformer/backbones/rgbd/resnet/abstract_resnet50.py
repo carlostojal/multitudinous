@@ -1,7 +1,13 @@
 import torch
 from voxel_transformer.backbones.rgbd.rgbd_backbone import RGBDBackbone
+from typing import Generic, TypeVar
+from abc import ABC
+from voxel_transformer.backbones.rgbd.attention.abstract_attention import AbstractAttention
 
 # RGBD backbone using the "ResNet 50" architecture - convolutional.
+
+# define the abstract attention generic
+AbstractAttentionT = TypeVar('AbstractAttentionT', bound=AbstractAttention)
 
 
 class Shortcut(torch.nn.Module):
@@ -17,9 +23,9 @@ class Shortcut(torch.nn.Module):
 
 
 # residual block class
-class ResBlock(torch.nn.Module):
+class ResBlock(torch.nn.Module, Generic[AbstractAttentionT]):
 
-    def __init__(self, in_channels: int, true_in_channels: int, stride: int = 1, attention_module: torch.nn.Module = None):
+    def __init__(self, in_channels: int, true_in_channels: int, stride: int = 1):
         super().__init__()
 
         self.expansion: int = 4
@@ -34,8 +40,11 @@ class ResBlock(torch.nn.Module):
         self.shortcut = Shortcut(in_channels=true_in_channels, out_channels=self.out_channels, stride=stride)
 
         self.sigmoid = torch.nn.Sigmoid()
-        
-        self.attention = attention_module
+
+        if AbstractAttentionT is not None:
+            self.attention = AbstractAttentionT()
+        else:
+            self.attention = None
 
     def forward(self, x: torch.Tensor):
 
@@ -49,7 +58,7 @@ class ResBlock(torch.nn.Module):
         residual = self.shortcut(residual)
 
         # if an attention module was set
-        if self.attention != None:
+        if self.attention is not None:
             # compute attention
             x_attn = self.attention(x)
             # apply attention
@@ -105,10 +114,10 @@ class BottleneckBlock(torch.nn.Module):
         return x
 
 
-class ResNet50(RGBDBackbone):
+class AbstractResNet50(ABC, RGBDBackbone, Generic[AbstractAttentionT]):
 
     # feature_len is the output feature vector length
-    def __init__(self, out_feature_len: int, attention_module: torch.nn.Module = None):
+    def __init__(self, out_feature_len: int):
         super().__init__()
 
         # the first layer has 4 input channels (RGBD)
@@ -140,8 +149,7 @@ class ResNet50(RGBDBackbone):
                 else:
                     stride = 1
 
-                new_block = ResBlock(in_channels=input_size, true_in_channels=last_output_size, stride=stride,
-                                     attention_module=attention_module)
+                new_block = ResBlock(in_channels=input_size, true_in_channels=last_output_size, stride=stride)
 
                 # save the previous input size
                 last_input_size = input_size
