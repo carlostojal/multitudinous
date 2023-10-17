@@ -1,5 +1,5 @@
 import torch
-from abstract_resnet50 import AbstractResNet50
+from voxel_transformer.backbones.rgbd.resnet.abstract_resnet50 import AbstractResNet50
 
 # the vanilla resnet (no attention) uses None as attention type
 class ResNet50(AbstractResNet50[None]):
