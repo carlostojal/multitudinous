@@ -40,7 +40,7 @@ class ResBlock(torch.nn.Module):
 
         self.attention = None
         if attention_type is not None:
-            self.attention = attention_type(in_channels)
+            self.attention = attention_type(self.out_channels)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
 
@@ -57,6 +57,8 @@ class ResBlock(torch.nn.Module):
         if self.attention is not None:
             # compute attention
             x_attn = self.attention(x)
+            # rescale the attention
+            x_attn = x_attn.view(x.size(0), -1, 1, 1)
             # apply attention
             x *= x_attn
 

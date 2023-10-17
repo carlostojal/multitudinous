@@ -18,15 +18,15 @@ class SE(AbstractAttention):
         # -- hyperparameters --
 
         # set the pooling method
-        pooling_method = SEPoolingMethod.AVG_POOL
+        pooling_method = SEPoolingMethod.MAX_POOL
         # set the reduction ratio
         reduction_ratio = 2.0
 
         # -- squeeze --
         if pooling_method == SEPoolingMethod.MAX_POOL:
-            self.pool = torch.nn.MaxPool2d(in_size)
+            self.pool = torch.nn.AdaptiveMaxPool2d((1,1))
         elif pooling_method == SEPoolingMethod.AVG_POOL:
-            self.pool = torch.nn.AvgPool2d(in_size)
+            self.pool = torch.nn.AdaptiveAvgPool2d((1,1))
         else:
             raise Exception("Pooling method not supported!")
 
@@ -44,10 +44,11 @@ class SE(AbstractAttention):
         # sigmoid activation
         self.sigmoid = torch.nn.Sigmoid()
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
 
         # squeeze
         x = self.pool(x)
+        x = x.view(x.size(0), -1) # flatten the tensor
 
         # excitation
         x = self.fc1(x)
