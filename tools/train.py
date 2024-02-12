@@ -3,7 +3,7 @@ import torch
 import sys
 sys.path.append(".")
 
-from voxel_transformer.model_zoo.voxel_transformer_resnet50 import VoxelTransformer_ResNet50
+from multitudinous.model_zoo.multitudinous_resnet50 import VoxelTransformer_ResNet50
 
 # Run the training
 

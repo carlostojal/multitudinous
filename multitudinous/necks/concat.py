@@ -1,6 +1,6 @@
 import torch
 
-from voxel_transformer.necks.neck import Neck
+from multitudinous.necks.neck import Neck
 
 # Simple concatenation feature fusion neck
 

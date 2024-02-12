@@ -2,19 +2,19 @@ from typing import Type
 
 import torch
 
-from voxel_transformer.model_zoo.abstract_voxel_transformer import AbstractVoxelTransformer, PointCloudBackboneT
+from multitudinous.model_zoo.abstract_multitudinous import AbstractVoxelTransformer, PointCloudBackboneT
 
 # import the point cloud backbone
-from voxel_transformer.backbones.point_cloud.point_transformer import PointTransformer
+from multitudinous.backbones.point_cloud.point_transformer import PointTransformer
 
 # import the rgbd backbone
-from voxel_transformer.backbones.rgbd.resnet50 import ResNet50
+from multitudinous.backbones.rgbd.resnet50 import ResNet50
 
 # import the neck
-from voxel_transformer.necks.concat import ConcatNeck
+from multitudinous.necks.concat import ConcatNeck
 
 # import the occupancy head
-from voxel_transformer.heads.deconvolutional import DeconvolutionalHead
+from multitudinous.heads.deconvolutional import DeconvolutionalHead
 
 
 class VoxelTransformer_ResNet50(AbstractVoxelTransformer[PointTransformer, ResNet50, ConcatNeck, DeconvolutionalHead]):

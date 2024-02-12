@@ -1,5 +1,5 @@
 import torch
-from voxel_transformer.backbones.rgbd.rgbd_backbone import RGBDBackbone
+from multitudinous.backbones.rgbd.rgbd_backbone import RGBDBackbone
 
 # RGBD backbone using the "ResNet 50" architecture - convolutional.
 

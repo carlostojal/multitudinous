@@ -5,16 +5,16 @@ from typing import Type, TypeVar, Generic
 from threading import Thread
 
 # import the point cloud backbones
-from voxel_transformer.backbones.point_cloud.point_cloud_backbone import PointCloudBackbone
+from multitudinous.backbones.point_cloud.point_cloud_backbone import PointCloudBackbone
 
 # import the rgbd backbones
-from voxel_transformer.backbones.rgbd.rgbd_backbone import RGBDBackbone
+from multitudinous.backbones.rgbd.rgbd_backbone import RGBDBackbone
 
 # import the necks
-from voxel_transformer.necks.neck import Neck
+from multitudinous.necks.neck import Neck
 
 # import the heads
-from voxel_transformer.heads.head import Head
+from multitudinous.heads.head import Head
 
 # define abstract types bound to the abstract networks
 PointCloudBackboneT = TypeVar('PointCloudBackboneT', bound=PointCloudBackbone)
