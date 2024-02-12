@@ -1,7 +1,9 @@
 import torch
 
-from abc import ABC
+from abc import ABC, abstractmethod
 
 class Neck(ABC, torch.nn.Module):
-    
-    pass
+
+    @abstractmethod
+    def forward(self, point_cloud_features, rgbd_features):
+        pass

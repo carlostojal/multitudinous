@@ -6,4 +6,7 @@ from voxel_transformer.necks.neck import Neck
 
 class ConcatNeck(Neck):
     
-    pass
+    def forward(self, point_cloud_features, rgbd_features):
+        print("Neck forward")
+
+        pass
