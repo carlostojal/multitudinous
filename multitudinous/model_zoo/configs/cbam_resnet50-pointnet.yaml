@@ -1,0 +1,5 @@
+name: cbam_resnet50-pointnet
+img_backbone:
+  name: cbam_resnet50
+point_cloud_backbone:
+  name: pointnet

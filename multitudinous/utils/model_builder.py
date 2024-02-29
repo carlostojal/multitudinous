@@ -1,29 +1,19 @@
 import torch
-from multitudinous.model_zoo import img_backbones, point_cloud_backbones, necks, heads
+from multitudinous.models import img_backbones, point_cloud_backbones, necks, heads
 from multitudinous.model_zoo.multitudinous import Multitudinous
 
 # ensemble the multitudinous model
-def build_multitudinous(img_backbone: str, point_cloud_backbone: str, neck: str, head: str,
+def build_multitudinous(img_backbone: str, point_cloud_backbone: str,
                         img_backbone_weights_path: str = None, point_cloud_backbone_weights_path: str = None) -> Multitudinous:
     
     # get the image backbone
-    build_img_backbone(img_backbone, img_backbone_weights_path)
+    img_b = build_img_backbone(img_backbone, img_backbone_weights_path)
 
     # get the point cloud backbone
-    build_point_cloud_backbone(point_cloud_backbone, point_cloud_backbone_weights_path)
-
-    # get the neck
-    if neck not in necks:
-        raise ValueError(f'Neck {neck} not found. Available necks are {list(necks.keys())}.')
-    neck = necks[neck]
-
-    # get the head
-    if head not in heads:
-        raise ValueError(f'Head {head} not found. Available heads are {list(heads.keys())}.')
-    head = heads[head]
+    point_cloud_b = build_point_cloud_backbone(point_cloud_backbone, point_cloud_backbone_weights_path)
 
     # create the model
-    model = Multitudinous(img_backbone, point_cloud_backbone, neck, head)
+    model = Multitudinous(img_b, point_cloud_b)
 
     return model
 

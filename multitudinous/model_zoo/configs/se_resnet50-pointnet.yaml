@@ -1,0 +1,5 @@
+name: se_resnet50-pointnet
+img_backbone:
+  name: se_resnet50
+point_cloud_backbone:
+  name: pointnet
