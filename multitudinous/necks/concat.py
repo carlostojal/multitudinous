@@ -1,12 +1,9 @@
-import torch
+from torch import nn, Tensor, cat
 
-from multitudinous.necks.neck import Neck
+class ConcatNeck(nn.Module):
 
-# Simple concatenation feature fusion neck
+    def __init__(self) -> None:
+        super().__init__()
 
-class ConcatNeck(Neck):
-    
-    def forward(self, point_cloud_features, rgbd_features):
-        print("Neck forward")
-
-        pass
+    def forward(self, x: Tensor, y: Tensor) -> Tensor:
+        return cat(x, y)
