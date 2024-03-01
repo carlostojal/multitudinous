@@ -10,39 +10,43 @@ class TUM_RGBD(Dataset):
 
         # load the rgb images from "root/rgb" to a list
         self.rgb = []
-        for file in os.listdir(os.path.join(root, "rgb")):
+        fullpath = os.path.join(root, "rgb")
+        for file in os.listdir(fullpath):
             # load the image to a tensor
             f = None
             try:
                 # verify that the file exists
-                f = open(file, 'rb')
+                f = open(os.path.join(fullpath, file), 'rb')
             except FileNotFoundError:
                 return
             rgb_img = Image.open(f)
-            f.close()
             rgb_img = rgb_img.convert('RGB')
             rgb_img = np.array(rgb_img)
             rgb_img = rgb_img / 255.0 # normalize the image
             rgb_img = torch.from_numpy(rgb_img)
             rgb_img = rgb_img.float()
+            f.close()
 
-            # find the corresponding depth image
-            depth_file = file.replace("rgb", "depth")
+            self.rgb.append(rgb_img)
+
+        # load the depth images from "root/depth" to a list
+        self.depth = []
+        fullpath = os.path.join(root, "depth")
+        for file in os.listdir(fullpath):
             f = None
             try:
                 # verify that the file exists
-                f = open(depth_file, 'rb')
+                f = open(os.path.join(fullpath, file), 'rb')
             except FileNotFoundError:
                 return
             d_img = Image.open(f)
-            f.close()
             d_img = d_img.convert('L')
             d_img = np.array(d_img)
             d_img = d_img / 255.0 # normalize the image
             d_img = torch.from_numpy(d_img)
             d_img = d_img.float()
+            f.close()
 
-            self.rgb.append(rgb_img)
             self.depth.append(d_img)
 
 
