@@ -2,6 +2,7 @@ import sys
 sys.path.append(".")
 from multitudinous.utils.model_builder import build_img_backbone
 from multitudinous.utils.pretrainer import PreTrainer
+from multitudinous.datasets import datasets
 import argparse
 
 if __name__ == "__main__":
@@ -20,6 +21,10 @@ if __name__ == "__main__":
     print(img_backbone)
 
     # TODO: load the dataset
+    if args.dataset not in datasets:
+        raise ValueError(f"Dataset {args.dataset} not configured")
+    dataset = datasets[args.dataset]
+
     # TODO: create the pretrainer
     # TODO: train the image backbone
     # TODO: save the trained image backbone

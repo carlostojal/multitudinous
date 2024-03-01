@@ -1,5 +1,5 @@
-from torchvision import datasets
+from multitudinous.datasets.TUM_RGBD import TUM_RGBD
 
 datasets = {
-    'cifar10': datasets.CIFAR10
+    'tum_rgbd': TUM_RGBD
 }
