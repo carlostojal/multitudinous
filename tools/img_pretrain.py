@@ -2,7 +2,7 @@ import sys
 sys.path.append(".")
 from multitudinous.utils.model_builder import build_img_backbone
 from multitudinous.utils.pretrainer import PreTrainer
-from multitudinous.datasets import datasets
+from multitudinous.dataset_index import datasets
 import argparse
 
 if __name__ == "__main__":

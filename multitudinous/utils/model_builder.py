@@ -1,5 +1,5 @@
 import torch
-from multitudinous.models import img_backbones, point_cloud_backbones, necks, heads
+from multitudinous.model_index import img_backbones, point_cloud_backbones, necks, heads
 from multitudinous.model_zoo.multitudinous import Multitudinous
 
 # ensemble the multitudinous model

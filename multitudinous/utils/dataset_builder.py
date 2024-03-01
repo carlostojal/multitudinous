@@ -1,5 +1,5 @@
 import torch
-from multitudinous.datasets import datasets
+from multitudinous.dataset_index import datasets
 
 def build_img_dataset(dataset: str, path: str) -> torch.utils.data.Dataset:
 
