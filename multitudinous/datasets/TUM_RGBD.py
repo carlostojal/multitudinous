@@ -11,7 +11,9 @@ class TUM_RGBD(Dataset):
         # load the rgb images from "root/rgb" to a list
         self.rgb = []
         fullpath = os.path.join(root, "rgb")
-        for file in os.listdir(fullpath):
+        rgb_imgs = os.listdir(fullpath)
+        rgb_imgs.sort()
+        for file in rgb_imgs:
             # load the image to a tensor
             f = None
             try:
@@ -32,7 +34,9 @@ class TUM_RGBD(Dataset):
         # load the depth images from "root/depth" to a list
         self.depth = []
         fullpath = os.path.join(root, "depth")
-        for file in os.listdir(fullpath):
+        depth_imgs = os.listdir(fullpath)
+        depth_imgs.sort()
+        for file in depth_imgs:
             f = None
             try:
                 # verify that the file exists
