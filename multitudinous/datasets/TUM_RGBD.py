@@ -44,9 +44,8 @@ class TUM_RGBD(Dataset):
             except FileNotFoundError:
                 return
             d_img = Image.open(f)
-            d_img = d_img.convert('L')
-            d_img = np.array(d_img)
-            d_img = d_img / 255.0 # normalize the image
+            d_img = np.array(d_img, dtype=np.float32)
+            d_img = d_img / float((2**16)-1) # normalize the image (16-bit)
             d_img = torch.from_numpy(d_img)
             d_img = d_img.float()
             f.close()
