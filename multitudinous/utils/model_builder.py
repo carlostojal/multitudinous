@@ -1,5 +1,5 @@
 import torch
-from multitudinous.model_index import img_backbones, point_cloud_backbones, necks, heads
+from multitudinous.model_index import img_backbones, point_cloud_backbones, pretraining, necks, heads
 from multitudinous.model_zoo.multitudinous import Multitudinous
 
 # ensemble the multitudinous model
@@ -25,6 +25,15 @@ def build_img_backbone(img_backbone: str, weights_path: str = None) -> torch.nn.
     if weights_path is not None:
         img_b.load_state_dict(torch.load(weights_path))
     return img_b
+
+# build the image pre-training model
+def build_img_pretraining(img_pretraining: str, weights_path: str = None) -> torch.nn.Module:
+    if img_pretraining not in pretraining:
+        raise ValueError(f'Image pre-training model {img_pretraining} not found. Available image pre-training models are {list(pretraining.keys())}.')
+    img_p = pretraining[img_pretraining]
+    if weights_path is not None:
+        img_p.load_state_dict(torch.load(weights_path))
+    return img_p
 
 # build the point cloud backbone
 def build_point_cloud_backbone(point_cloud_backbone: str, weights_path: str = None) -> torch.nn.Module:
