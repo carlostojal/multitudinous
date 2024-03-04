@@ -16,7 +16,13 @@ This fork contains extra models developed in the context of MULTITUDINOUS, such 
 
 ## Pre-training backbones
 
-TODO
+Pre-training the backbones should make the training of the whole ensemble converge faster, thus being recomended.
+
+### Image Backbone Pre-training
+To have a more interactive process, you can use the Jupyter Notebook provided in `notebooks/pretrain_img.ipynb`. To make automated builds or whatever, you can use the script in `tools/img_pretrain.py`. To check the parameters accepted by this script, you can call it with the `--help` argument.
+
+### Point Cloud Backbone Pre-training
+Point cloud pre-training is not implemented yet.
 
 ## Training
 
