@@ -13,7 +13,7 @@ def pixel_loss(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
     
     # compare dimensions
     if pred.shape != target.shape:
-        raise ValueError('The input tensors must have the same shape.')
+        raise ValueError(f'The input tensors must have the same shape. Got {pred.shape} and {target.shape}.')
     
     num_pixels = pred.shape[0] * pred.shape[1]
 

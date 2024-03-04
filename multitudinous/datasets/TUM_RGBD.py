@@ -27,9 +27,13 @@ class TUM_RGBD(Dataset):
             rgb_img = rgb_img / 255.0 # normalize the image
             rgb_img = torch.from_numpy(rgb_img)
             rgb_img = rgb_img.float()
+            # squeeze the tensor
+            rgb_img = torch.squeeze(rgb_img, dim=0)
+            # permute the dimensions
+            rgb_img1 = rgb_img.permute(2, 0, 1)
             f.close()
 
-            self.rgb.append(rgb_img)
+            self.rgb.append(rgb_img1)
 
         # load the depth images from "root/depth" to a list
         self.depth = []
