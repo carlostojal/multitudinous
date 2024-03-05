@@ -4,7 +4,7 @@ import sys
 sys.path.append(".")
 
 from multitudinous.utils.model_builder import build_multitudinous
-from multitudinous.model_zoo.configs.ModelConfig import ModelConfig
+from ..configs.model.ModelConfig import ModelConfig
 
 # Run the training
 

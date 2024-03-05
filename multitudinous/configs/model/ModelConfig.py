@@ -1,4 +1,5 @@
 import yaml
+from ..Config import Config
 
 class ImgBackboneConfig:
     def __init__(self) -> None:
@@ -15,7 +16,7 @@ class PointCloudBackboneConfig:
         self.weights_path = None
         self.num_points = None
 
-class ModelConfig:
+class ModelConfig(Config):
 
     def __init__(self) -> None:
         self.name = None

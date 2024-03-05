@@ -1,0 +1,13 @@
+name: 'se_resnet50_unet'
+batch_size: 1
+optimizer: 'adam'
+epochs: 10
+learning_rate: 0.001
+momentum: 0.9
+loss_fn: 'pixel_loss'
+encoder:
+  name: se_resnet50
+  img_width: 640
+  img_height: 480
+decoder:
+  attention: 'cbam'
