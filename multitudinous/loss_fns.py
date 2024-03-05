@@ -23,5 +23,4 @@ def pixel_loss(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
     # calculate the l2 norm
     l2 = torch.linalg.matrix_norm(diff, ord=2)
 
-    # calculate the pixel loss
-    return (l2**2) / num_pixels
+    return l2

@@ -17,7 +17,7 @@ if __name__ == "__main__":
     parser.add_argument('--config', type=str, default='./multitudinous/configs/pretraining/se_resnet50_unet.yaml', help='The image pretraining network to train')
     parser.add_argument('--weights', type=str, default=None, help='The path to the weights of the image backbone')
     parser.add_argument('--dataset', type=str, default='./multitudinous/configs/datasets/tum_rgbd.yaml', help='The dataset to use')
-    parser.add_argument('--output', type=str, default='output', help='The path to save the model weights')
+    parser.add_argument('--output', type=str, default='./output', help='The path to save the model weights')
     args = parser.parse_args()
 
     # build the image pretrainer
@@ -89,7 +89,7 @@ if __name__ == "__main__":
             # adjust the weights
             optim.step()
 
-            del rgb, depth, rgbd, pred_depth, loss_total, loss
+            del rgb, depth, rgbd, pred_depth, loss_total
 
         print(f'Epoch {epoch+1}/{config.epochs}, Loss: {loss.item()}')
 
