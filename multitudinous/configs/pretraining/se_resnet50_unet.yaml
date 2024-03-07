@@ -1,7 +1,7 @@
 name: 'se_resnet50_unet'
 batch_size: 1
 optimizer: 'adam'
-epochs: 10
+epochs: 20
 learning_rate: 0.001
 momentum: 0.9
 loss_fn: 'pixel_loss'
