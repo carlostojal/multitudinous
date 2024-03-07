@@ -25,6 +25,7 @@ class PreTrainingConfig:
         self.batch_size = None
         self.optimizer = None
         self.epochs = None
+        self.train_percent = None
         self.learning_rate = None
         self.momentum = None
         self.loss_fn = None
@@ -43,6 +44,7 @@ class PreTrainingConfig:
             self.batch_size = conf['batch_size']
             self.optimizer = conf['optimizer']
             self.epochs = conf['epochs']
+            self.train_percent = conf['train_percent']
             self.learning_rate = conf['learning_rate']
             self.momentum = conf['momentum']
             self.loss_fn = conf['loss_fn']

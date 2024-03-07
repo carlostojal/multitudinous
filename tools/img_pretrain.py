@@ -61,10 +61,18 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     img_pretrainer.to(device)
 
+    total_samples = len(dataloader)
+    # sample number from which to start validation
+    train_thres = int(total_samples * config.train_percent)
+
     # train the model
     for epoch in range(config.epochs):
+
+        curr_sample = 0
+
         # iterate samples
         for rgb, depth in dataloader:
+
             # zero the gradients for each batch
             optim.zero_grad()
 
@@ -83,11 +91,14 @@ if __name__ == "__main__":
                 loss_total += loss_fn(pred_depth[i], depth[i])
             loss = loss_total / len(pred_depth)
 
-            # compute the gradients
-            loss.backward()
+            if curr_sample < train_thres:
+                # compute the gradients
+                loss.backward()
 
-            # adjust the weights
-            optim.step()
+                # adjust the weights
+                optim.step()
+
+            curr_sample += 1
 
             del rgb, depth, rgbd, pred_depth, loss_total
 

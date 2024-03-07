@@ -2,6 +2,7 @@ name: 'cbam_resnet50_unet'
 batch_size: 1
 optimizer: 'adam'
 epochs: 10
+train_percent: 0.7
 learning_rate: 0.001
 momentum: 0.9
 loss_fn: 'pixel_loss'
