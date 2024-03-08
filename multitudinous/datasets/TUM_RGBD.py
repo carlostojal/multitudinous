@@ -4,9 +4,12 @@ import os
 from PIL import Image
 import numpy as np
 
+BIT_PRECISION_16 = (2**16)-1
+
 class TUM_RGBD(Dataset):
-    def __init__(self, root: str):
+    def __init__(self, root: str, shape: tuple = (640, 480)):
         self.root = root
+        self.shape = shape
 
         # load the rgb images from "root/rgb" to a list
         self.rgb = []
@@ -14,26 +17,8 @@ class TUM_RGBD(Dataset):
         rgb_imgs = os.listdir(fullpath)
         rgb_imgs.sort()
         for file in rgb_imgs:
-            # load the image to a tensor
-            f = None
-            try:
-                # verify that the file exists
-                f = open(os.path.join(fullpath, file), 'rb')
-            except FileNotFoundError:
-                return
-            rgb_img = Image.open(f)
-            rgb_img = rgb_img.convert('RGB')
-            rgb_img = np.array(rgb_img)
-            rgb_img = rgb_img / 255.0 # normalize the image
-            rgb_img = torch.from_numpy(rgb_img)
-            rgb_img = rgb_img.float()
-            # squeeze the tensor
-            rgb_img = torch.squeeze(rgb_img, dim=0)
-            # permute the dimensions
-            rgb_img1 = rgb_img.permute(2, 0, 1)
-            f.close()
-
-            self.rgb.append(rgb_img1)
+            # append the filename to the list
+            self.rgb.append(os.path.join(fullpath, file))
 
         # load the depth images from "root/depth" to a list
         self.depth = []
@@ -41,29 +26,53 @@ class TUM_RGBD(Dataset):
         depth_imgs = os.listdir(fullpath)
         depth_imgs.sort()
         for file in depth_imgs:
-            f = None
-            try:
-                # verify that the file exists
-                f = open(os.path.join(fullpath, file), 'rb')
-            except FileNotFoundError:
-                return
-            d_img = Image.open(f)
-            d_img = np.array(d_img, dtype=np.float32)
-            d_img = d_img / float((2**16)-1) # normalize the image (16-bit)
-            d_img = torch.from_numpy(d_img)
-            d_img = d_img.float()
-            f.close()
-
-            self.depth.append(d_img)
+            # append the filenamer to the list
+            self.depth.append(os.path.join(fullpath, file))
 
 
     def __len__(self):
         return len(self.rgb) # the same length as the depth images
 
     def __getitem__(self, idx):
-        
-        # get the rgb and depth images
-        rgb = self.rgb[idx]
-        depth = self.depth[idx]
 
-        return rgb, depth
+        rgb_filename = self.rgb[idx]
+
+        # open the rgb image
+        rgb_f = None
+        try:
+            # verify that the file exists
+            rgb_f = open(rgb_filename, 'rb')
+        except FileNotFoundError:
+            return
+        rgb_img = Image.open(rgb_f)
+        # resize the image to shape
+        rgb_img = rgb_img.resize(self.shape)
+        rgb_img = np.array(rgb_img, dtype=np.float32)
+        rgb_img = rgb_img / 255.0
+        rgb_img = torch.from_numpy(rgb_img)
+        rgb_img = rgb_img.float()   
+        # squeeze the tensor
+        rgb_img = torch.squeeze(rgb_img, dim=0)
+        # permute the dimensions
+        rgb_img = rgb_img.permute(2, 0, 1)
+        rgb_f.close()
+
+        depth_filename = self.depth[idx]
+
+        # open the depth image
+        depth_f = None
+        try:
+            # verify that the file exists
+            depth_f = open(depth_filename, 'rb')
+        except FileNotFoundError:
+            return
+        depth_img = Image.open(depth_f)
+        # resize the image to shape
+        depth_img = depth_img.resize(self.shape)
+        depth_img = np.array(depth_img, dtype=np.float32)
+        depth_img = depth_img / BIT_PRECISION_16
+        depth_img = torch.from_numpy(depth_img)
+        depth_img = depth_img.float()
+        depth_f.close()
+
+        return rgb_img, depth_img
