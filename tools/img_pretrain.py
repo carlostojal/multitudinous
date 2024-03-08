@@ -9,6 +9,7 @@ from multitudinous.configs.datasets.DatasetConfig import DatasetConfig
 import torch
 from torch.utils.data import DataLoader
 import argparse
+import datetime
 
 if __name__ == "__main__":
 
@@ -42,6 +43,8 @@ if __name__ == "__main__":
     # train the image backbone
     print("Training the image backbone...", end=" ")
 
+    print("Start time: ", datetime.datetime.now().strftime("%H:%M:%S %Y-%m-%d"))
+
     # define the optimizer
     optim = None
     if config.optimizer == 'sgd':
@@ -53,9 +56,6 @@ if __name__ == "__main__":
     
     # define the loss function
     loss_fn = build_loss_fn(config.loss_fn)
-    
-    # set the model to training mode
-    img_pretrainer.train(True)
 
     # set the device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -67,6 +67,9 @@ if __name__ == "__main__":
 
     # train the model
     for epoch in range(config.epochs):
+
+        # set the model to training mode
+        img_pretrainer.train(True)
 
         curr_sample = 0
 
@@ -97,10 +100,16 @@ if __name__ == "__main__":
 
                 # adjust the weights
                 optim.step()
+            else:
+                img_pretrainer.eval() # set the model to evaluation mode
 
             curr_sample += 1
 
             del rgb, depth, rgbd, pred_depth, loss_total
+
+            # cleanup
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
         print(f'Epoch {epoch+1}/{config.epochs}, Loss: {loss.item()}')
 
@@ -110,6 +119,9 @@ if __name__ == "__main__":
         torch.save(img_pretrainer.state_dict(), pretrainer_path)
         backbone_path = os.path.join(args.output, f"img_backbone_{epoch+1}.pth")
         torch.save(img_pretrainer.resnet.state_dict(), backbone_path)
+        print("done.")
+
+    print("End time: ", datetime.datetime.now().strftime("%H:%M:%S %Y-%m-%d"))
 
     print("done.")
 
