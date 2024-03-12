@@ -6,19 +6,19 @@ from multitudinous.necks.concat import ConcatNeck
 
 # image backbone models
 img_backbones = {
-    'resnet50': resnet50(),
-    'se_resnet50': se_resnet50(),
-    'cbam_resnet50': cbam_resnet50()
+    'resnet50': resnet50,
+    'se_resnet50': se_resnet50,
+    'cbam_resnet50': cbam_resnet50
 }
 
 # pre-training specific models
 pretraining = {
-    'resnet50_unet': resnet50_unet(),
-    'se_resnet50_unet': se_resnet50_unet(),
-    'cbam_resnet50_unet': cbam_resnet50_unet(),
-    "resnet50_ae": resnet50_ae(),
-    "se_resnet50_ae": se_resnet50_ae(),
-    "cbam_resnet50_ae": cbam_resnet50_ae()
+    'resnet50_unet': resnet50_unet,
+    'se_resnet50_unet': se_resnet50_unet,
+    'cbam_resnet50_unet': cbam_resnet50_unet,
+    "resnet50_ae": resnet50_ae,
+    "se_resnet50_ae": se_resnet50_ae,
+    "cbam_resnet50_ae": cbam_resnet50_ae
 }
 
 # point cloud backbone models

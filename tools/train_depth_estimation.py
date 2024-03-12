@@ -22,10 +22,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # build the image pretrainer
-    print("Building the image pretrainer...", end=" ")
+    print("Building the depth estimator...", end=" ")
     config: PreTrainingConfig = PreTrainingConfig()
     config.parse_from_file(args.config)
-    img_pretrainer: torch.nn.Module = build_img_pretraining(config.name, 4, args.weights)
+    img_pretrainer: torch.nn.Module = build_img_pretraining(config.name, 3, args.weights)
     print("done.")
 
     # load the dataset
@@ -82,11 +82,9 @@ if __name__ == "__main__":
             # build the rgb-d image
             rgb = rgb.to(device)
             depth = depth.to(device)
-            depth = depth.unsqueeze(1)
-            rgbd = torch.cat((rgb, depth), dim=1)
 
             # forward pass
-            pred_depth = img_pretrainer(rgbd)
+            pred_depth = img_pretrainer(rgb)
 
             # compute the loss
             loss_total = 0
@@ -105,7 +103,7 @@ if __name__ == "__main__":
 
             curr_sample += 1
 
-            del rgb, depth, rgbd, pred_depth, loss_total
+            del rgb, depth, pred_depth, loss_total
 
             # cleanup
             if torch.cuda.is_available():
@@ -115,10 +113,8 @@ if __name__ == "__main__":
 
         # save the model
         print("Saving the model...", end=" ")
-        pretrainer_path = os.path.join(args.output, f"img_pretrainer_{epoch+1}.pth")
+        pretrainer_path = os.path.join(args.output, f"depth_estimator_{epoch+1}.pth")
         torch.save(img_pretrainer.state_dict(), pretrainer_path)
-        backbone_path = os.path.join(args.output, f"img_backbone_{epoch+1}.pth")
-        torch.save(img_pretrainer.resnet.state_dict(), backbone_path)
         print("done.")
 
     print("End time: ", datetime.datetime.now().strftime("%H:%M:%S %Y-%m-%d"))

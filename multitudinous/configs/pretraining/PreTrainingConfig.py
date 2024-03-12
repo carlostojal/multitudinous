@@ -4,6 +4,7 @@ from ..Config import Config
 class EncoderConfig(Config):
     def __init__(self) -> None:
         self.name = None
+        self.in_channels = None
         self.img_width = None
         self.img_height = None
 
@@ -51,6 +52,7 @@ class PreTrainingConfig:
 
             self.encoder = EncoderConfig()
             self.encoder.name = conf['encoder']['name']
+            self.encoder.in_channels = conf['encoder']['in_channels']
             self.encoder.img_width = conf['encoder']['img_width']
             self.encoder.img_height = conf['encoder']['img_height']
         

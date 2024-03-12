@@ -8,6 +8,7 @@ momentum: 0.9
 loss_fn: 'pixel_loss'
 encoder:
   name: cbam_resnet50
+  in_channels: 4
   img_width: 640
   img_height: 480
 decoder:

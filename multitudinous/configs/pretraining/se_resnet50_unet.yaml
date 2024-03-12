@@ -1,13 +1,14 @@
 name: 'se_resnet50_unet'
 batch_size: 1
 optimizer: 'adam'
-epochs: 10
+epochs: 15
 train_percent: 0.7
 learning_rate: 0.001
 momentum: 0.9
 loss_fn: 'pixel_loss'
 encoder:
   name: se_resnet50
+  in_channels: 3
   img_width: 640
   img_height: 480
 decoder:
