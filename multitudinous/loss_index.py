@@ -1,5 +1,5 @@
-from .loss_fns import pixel_loss
+from .loss_fns import rmse
 
 img_loss_fns = {
-    'pixel_loss': pixel_loss
+    'rmse': rmse
 }
