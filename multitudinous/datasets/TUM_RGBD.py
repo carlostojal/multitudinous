@@ -31,9 +31,13 @@ class TUM_RGBD(Dataset):
 
 
     def __len__(self):
-        return len(self.rgb) # the same length as the depth images
+        return len(min(self.rgb, self.depth)) # the same length as the depth images
 
     def __getitem__(self, idx):
+
+        # check bounds
+        if idx >= len(self.rgb) or idx >= len(self.depth) or idx < 0:
+            return
 
         rgb_filename = self.rgb[idx]
 
