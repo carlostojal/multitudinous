@@ -1,5 +1,4 @@
 import torch
-from math import sqrt
 
 # pixel loss function
 def rmse(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
@@ -16,4 +15,4 @@ def rmse(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
     if pred.shape != target.shape:
         raise ValueError(f'The input tensors must have the same shape. Got {pred.shape} and {target.shape}.')
     
-    return sqrt(torch.nn.MSELoss()(pred, target))
+    return torch.sqrt(torch.nn.MSELoss()(pred, target))
