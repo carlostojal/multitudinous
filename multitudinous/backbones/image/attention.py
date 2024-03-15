@@ -7,7 +7,7 @@ class AttentionModule(ABC):
     def __init__(self):
         pass
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         pass
 
 class SqueezeAndExcitation(AttentionModule):
