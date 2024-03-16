@@ -151,9 +151,9 @@ class ResNet50(ResNet):
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
         self.layer1 = self._make_layer(64, 64, 3, stride=1)
-        self.layer2 = self._make_layer(64, 128, 4, stride=2)
-        self.layer3 = self._make_layer(128, 256, 6, stride=2)
-        self.layer4 = self._make_layer(256, 512, 8, stride=2)
+        self.layer2 = self._make_layer(256, 128, 4, stride=2)
+        self.layer3 = self._make_layer(512, 256, 6, stride=2)
+        self.layer4 = self._make_layer(1024, 512, 8, stride=2)
 
     def _make_layer(self, in_channels: int, channels: int, n_blocks: int, stride: int) -> nn.Sequential:
         layers = []
@@ -163,29 +163,29 @@ class ResNet50(ResNet):
         return nn.Sequential(*layers)
         
 
-    def forward(self, x: Tensor) -> tuple[Tensor, Tensor, Tensor, Tensor]:
+    def forward(self, x: Tensor) -> tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:
         
         x = self.conv1(x)
         x = self.bn1(x)
-        x = self.maxpool(x)
+        x1 = self.maxpool(x) # 64 channels
 
-        l1 = self.layer1(x)
-        l2 = self.layer2(x)
-        l3 = self.layer3(x)
-        l4 = self.layer4(x)
+        x2 = self.layer1(x1) # 256 channels
+        x3 = self.layer2(x2) # 512 channels
+        x4 = self.layer3(x3) # 1024 channels
+        out = self.layer4(x4) # 2048 channels
 
-        return l1, l2, l3, l4
+        return x1, x2, x3, x4, out
 
 class SEResNet50(ResNet50):
     def __init__(self, in_channels: int):
         super().__init__(SEBottleneckBlock, in_channels)
 
-    def forward(self, x: Tensor) -> tuple[Tensor, Tensor, Tensor, Tensor]:
+    def forward(self, x: Tensor) -> tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:
         return super().forward(x)
 
 class CBAMResNet50(ResNet50):
     def __init__(self, in_channels: int):
         super().__init__(CBAMBottleneckBlock, in_channels)
 
-    def forward(self, x: Tensor) -> tuple[Tensor, Tensor, Tensor, Tensor]:
+    def forward(self, x: Tensor) -> tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:
         return super().forward(x)
