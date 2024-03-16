@@ -129,7 +129,7 @@ class ResNet(ABC, nn.Module):
         pass
 
 class ResNet50(ResNet):
-    def __init__(self, block: Type[Union[BottleneckBlock,SEBottleneckBlock,CBAMBottleneckBlock]] = Type[BottleneckBlock], in_channels: int = 3):
+    def __init__(self, block: Type[Union[BottleneckBlock,SEBottleneckBlock,CBAMBottleneckBlock]] = BottleneckBlock, in_channels: int = 3):
         super().__init__(block, in_channels)
 
         self.conv1 = nn.Conv2d(self.in_channels, 64, kernel_size=7, stride=2, padding=3, bias=False)
