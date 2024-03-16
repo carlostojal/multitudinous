@@ -59,6 +59,8 @@ class ConvolutionalBlockAttentionModule(AttentionModule):
             nn.Sigmoid()
         )
         self.conv = nn.Conv2d(2, 1, kernel_size=7, stride=1, padding=3, bias=False)
+        self.channel_attention = FloatFunctional()
+        self.spatial_attention = FloatFunctional()
 
     def forward(self, x: Tensor) -> Tensor:
 
@@ -79,7 +81,7 @@ class ConvolutionalBlockAttentionModule(AttentionModule):
 
         # apply channel attention to the input tensor
         # (BxCxHxW) * (BxCx1x1)
-        x1 = x * mc
+        x1 = self.channel_attention.mul(x, mc)
 
         # spatial attention
         # (Bx1xHxW) - reduce dimension 1
@@ -90,4 +92,6 @@ class ConvolutionalBlockAttentionModule(AttentionModule):
         ms = nn.ReLU(self.conv(pool_s)) # apply convolutional layer
 
         # apply spatial attention
-        return x1 * ms
+        x1 = self.spatial_attention.mul(x1, ms)
+
+        return x1
