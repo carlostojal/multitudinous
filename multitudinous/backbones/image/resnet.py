@@ -1,8 +1,9 @@
 import torch
 from torch import nn, Tensor
 from torch.quantization import QuantStub, DeQuantStub
+from torch.ao.nn.quantized import FloatFunctional
 from abc import ABC
-from typing import Type, Union, Optional
+from typing import Type, Union
 from multitudinous.backbones.image.attention import SqueezeAndExcitation, ConvolutionalBlockAttentionModule
 
 class BottleneckBlock(nn.Module):
@@ -34,8 +35,7 @@ class BottleneckBlock(nn.Module):
 
         self.relu = nn.ReLU(inplace=True)
 
-        self.quant = QuantStub()
-        self.dequant = DeQuantStub()
+        self.residual = FloatFunctional()
 
     # returns the output of the block and the identity
     def _forward_impl(self, x: Tensor) -> tuple[Tensor, Tensor]:
@@ -60,20 +60,14 @@ class BottleneckBlock(nn.Module):
 
     def forward(self, x: Tensor) -> Tensor:
 
-        # quantize output
-        x = self.quant(x)
-
         x, identity = self._forward_impl(x)
 
         # add the residual connection
-        out += identity
+        x = self.residual.add(x, identity)
 
-        out = self.relu(out)
+        x = self.relu(x)
 
-        # dequantize output
-        out = self.dequant(out)
-
-        return out
+        return x
 
     
 class SEBottleneckBlock(BottleneckBlock):
@@ -86,7 +80,6 @@ class SEBottleneckBlock(BottleneckBlock):
         self.se = SqueezeAndExcitation(channels * expansion)
 
     def forward(self, x: Tensor) -> Tensor:
-        x = self.quant(x)
 
         x, identity = self._forward_impl(x)
 
@@ -94,11 +87,9 @@ class SEBottleneckBlock(BottleneckBlock):
         x = self.se(x)
 
         # add the residual connection
-        x += identity
+        x = self.residual.add(x, identity)
 
         x = self.relu(x)
-
-        x = self.dequant(x)
 
         return x
 
@@ -113,7 +104,6 @@ class CBAMBottleneckBlock(BottleneckBlock):
         self.cbam = ConvolutionalBlockAttentionModule(channels * expansion)
 
     def forward(self, x: Tensor) -> Tensor:
-        x = self.quant(x)
 
         x, identity = self._forward_impl(x)
 
@@ -121,11 +111,9 @@ class CBAMBottleneckBlock(BottleneckBlock):
         x = self.cbam(x)
 
         # add the residual connection
-        x += identity
+        x = self.residual.add(x, identity)
 
         x = self.relu(x)
-
-        x = self.dequant(x)
 
         return x
 

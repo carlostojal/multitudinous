@@ -1,5 +1,6 @@
 import torch
 from torch import nn, Tensor
+from torch.ao.nn.quantized import FloatFunctional
 from typing import Type, Union
 from abc import ABC
 from multitudinous.backbones.image.resnet import ResNet50, SEResNet50, CBAMResNet50
@@ -21,6 +22,8 @@ class ResNetAutoEncoder(ABC, nn.Module):
         self.block5 = self._make_block(64, 64)
         self.conv = nn.Conv2d(64, out_channels, kernel_size=1)
 
+        self.residual = FloatFunctional()
+
     def _make_block(self, in_channels: int, out_channels: int) -> nn.Module:
         return nn.Sequential(
             nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=2, bias=False), # 2x2 upsample
@@ -35,10 +38,10 @@ class ResNetAutoEncoder(ABC, nn.Module):
         x1, x2, x3, x4, x5 = self.encoder(x)
 
         if self.with_residuals:
-            out = self.block1(x5) + x4
-            out = self.block2(out) + x3
-            out = self.block3(out) + x2
-            out = self.block4(out) + x1
+            out = self.residual.add(self.block1(x5), x4)
+            out = self.residual.add(self.block2(out), x3)
+            out = self.residual.add(self.block3(out), x2)
+            out = self.residual.add(self.block4(out), x1)
         else:
             out = self.block1(x5)
             out = self.block2(out)

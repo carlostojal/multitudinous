@@ -1,5 +1,6 @@
 import torch
 from torch import nn, Tensor
+from torch.ao.nn.quantized import FloatFunctional
 from abc import ABC
 
 # abstract attention module
@@ -24,13 +25,24 @@ class SqueezeAndExcitation(AttentionModule):
             nn.Linear(in_channels // reduction_ratio, in_channels),
             nn.Sigmoid()
         )
+        self.excitation = FloatFunctional()
 
 
     def forward(self, x: Tensor) -> Tensor:
-        b, c, _, _ = x.size()
-        y = self.avg_pool(x).view(b, c)
-        y = self.fc(y).view(b, c, 1, 1)
-        return x * y.expand_as(x)
+        
+        # squeeze
+        f_sq = self.avg_pool(x) # average pooling (BxCx1x1)
+        f_sq = f_sq.squeeze() # reshape to (C)
+
+        # excitation
+        f_ex = self.fc(f_sq)
+        # reshape to (BxCx1x1)
+        # if it doesn't have a batch dimension, add one
+        if len(f_ex.shape) == 1:
+            f_ex = f_ex.unsqueeze(0)
+        f_ex = f_ex.unsqueeze(2).unsqueeze(3)
+
+        return self.excitation.mul(x, f_ex) # multiply the input tensor by the excitation
 
 class ConvolutionalBlockAttentionModule(AttentionModule):
     
@@ -60,7 +72,7 @@ class ConvolutionalBlockAttentionModule(AttentionModule):
         # channel attention
         max = self.fc(max) # apply fully connected layer (W0, W1)
         avg = self.fc(avg) # apply fully connected layer (W0, W1)
-        mc = self.gate_layer(max + avg)
+        mc = nn.ReLU(max + avg)
 
         # reshape to (BxCx1x1)
         mc = mc.unsqueeze(0).unsqueeze(2).unsqueeze(3)
@@ -75,7 +87,7 @@ class ConvolutionalBlockAttentionModule(AttentionModule):
         avg_s = torch.mean(x1, dim=1, keepdim=True)
 
         pool_s = torch.cat([max_s, avg_s], dim=1) # concatenate the two tensors
-        ms = self.gate_layer(self.conv(pool_s)) # apply convolutional layer
+        ms = nn.ReLU(self.conv(pool_s)) # apply convolutional layer
 
         # apply spatial attention
         return x1 * ms
