@@ -3,8 +3,9 @@ from torch import nn, Tensor
 from abc import ABC
 
 # abstract attention module
-class AttentionModule(ABC):
+class AttentionModule(ABC, nn.Module):
     def __init__(self):
+        super().__init__()
         pass
 
     def forward(self, x: Tensor) -> Tensor:
@@ -73,7 +74,7 @@ class ConvolutionalBlockAttentionModule(AttentionModule):
         max_s, _ = torch.max(x1, dim=1, keepdim=True)
         avg_s = torch.mean(x1, dim=1, keepdim=True)
 
-        pool_s = cat([max_s, avg_s], dim=1) # concatenate the two tensors
+        pool_s = torch.cat([max_s, avg_s], dim=1) # concatenate the two tensors
         ms = self.gate_layer(self.conv(pool_s)) # apply convolutional layer
 
         # apply spatial attention
