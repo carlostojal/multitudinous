@@ -1,9 +1,10 @@
 import torch
 from torch import nn, Tensor
 from typing import Type, Union
+from abc import ABC
 from multitudinous.backbones.image.resnet import ResNet50, SEResNet50, CBAMResNet50
     
-class ResNetAutoEncoder(nn.Module):
+class ResNetAutoEncoder(ABC, nn.Module):
     def __init__(self, encoder: Type[Union[ResNet50, SEResNet50, CBAMResNet50]], in_channels: int = 3, out_channels: int = 3, with_residuals: bool = False) -> None:
         super().__init__()
 
@@ -43,3 +44,45 @@ class ResNetAutoEncoder(nn.Module):
             out = self.block4(out)
 
         return out
+
+class ResNet50AE(ResNetAutoEncoder):
+    def __init__(self, in_channels: int = 3, out_channels: int = 3) -> None:
+        super().__init__(encoder=ResNet50, in_channels=in_channels, out_channels=out_channels, with_residuals=False)
+
+    def forward(self, x: Tensor) -> Tensor:
+        return super().forward(x)
+    
+class SEResNet50AE(ResNetAutoEncoder):
+    def __init__(self, in_channels: int = 3, out_channels: int = 3) -> None:
+        super().__init__(encoder=SEResNet50, in_channels=in_channels, out_channels=out_channels, with_residuals=False)
+
+    def forward(self, x: Tensor) -> Tensor:
+        return super().forward(x)
+    
+class CBAMResNet50AE(ResNetAutoEncoder):
+    def __init__(self, in_channels: int = 3, out_channels: int = 3) -> None:
+        super().__init__(encoder=CBAMResNet50, in_channels=in_channels, out_channels=out_channels, with_residuals=False)
+
+    def forward(self, x: Tensor) -> Tensor:
+        return super().forward(x)
+    
+class ResNet50UNet(ResNetAutoEncoder):
+    def __init__(self, in_channels: int = 3, out_channels: int = 3) -> None:
+        super().__init__(encoder=ResNet50, in_channels=in_channels, out_channels=out_channels, with_residuals=True)
+
+    def forward(self, x: Tensor) -> Tensor:
+        return super().forward(x)
+    
+class SEResNet50UNet(ResNetAutoEncoder):
+    def __init__(self, in_channels: int = 3, out_channels: int = 3) -> None:
+        super().__init__(encoder=SEResNet50, in_channels=in_channels, out_channels=out_channels, with_residuals=True)
+
+    def forward(self, x: Tensor) -> Tensor:
+        return super().forward(x)
+    
+class CBAMResNet50UNet(ResNetAutoEncoder):
+    def __init__(self, in_channels: int = 3, out_channels: int = 3) -> None:
+        super().__init__(encoder=CBAMResNet50, in_channels=in_channels, out_channels=out_channels, with_residuals=True)
+
+    def forward(self, x: Tensor) -> Tensor:
+        return super().forward(x)
