@@ -4,11 +4,14 @@ from typing import Type, Union
 from multitudinous.backbones.image.resnet import ResNet50, SEResNet50, CBAMResNet50
     
 class ResNetAutoEncoder(nn.Module):
-    def __init__(self, encoder: Type[Union[ResNet50, SEResNet50, CBAMResNet50]], out_channels: int = 3, with_residuals: bool = False) -> None:
+    def __init__(self, encoder: Type[Union[ResNet50, SEResNet50, CBAMResNet50]], in_channels: int = 3, out_channels: int = 3, with_residuals: bool = False) -> None:
         super().__init__()
 
+        self.in_channels = in_channels
         self.out_channels = out_channels
         self.with_residuals = with_residuals
+
+        self.encoder = encoder(in_channels=in_channels)
 
         self.block1 = self._make_block(2048, 1024)
         self.block2 = self._make_block(1024, 512)
