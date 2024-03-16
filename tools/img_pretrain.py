@@ -118,6 +118,8 @@ if __name__ == "__main__":
 
         # save the model
         print("Saving the model...", end=" ")
+        if not os.path.exists(args.output):
+            os.makedirs(args.output)
         pretrainer_path = os.path.join(args.output, f"img_pretrainer_{epoch+1}.pth")
         torch.save(img_pretrainer.state_dict(), pretrainer_path)
         backbone_path = os.path.join(args.output, f"img_backbone_{epoch+1}.pth")
