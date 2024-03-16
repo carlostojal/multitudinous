@@ -106,6 +106,8 @@ if __name__ == "__main__":
 
             curr_sample += 1
 
+            print(f"\rEpoch {epoch+1}/{config.epochs}, Sample {curr_sample}/{total_samples}, Loss: {loss.item()}", end="")
+
             del rgb, depth, rgbd, pred_depth, loss_total
 
             # cleanup
