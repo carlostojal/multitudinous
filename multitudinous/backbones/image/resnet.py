@@ -9,7 +9,7 @@ class BottleneckBlock(nn.Module):
     def __init__(self,
                  in_channels: int,
                  channels: int,
-                 expansion: int,
+                 expansion: int = 4,
                  stride: int = 1):
         super().__init__()
 
@@ -155,6 +155,9 @@ class ResNet50(ResNet):
         self.layer3 = self._make_layer(512, 256, 6, stride=2)
         self.layer4 = self._make_layer(1024, 512, 8, stride=2)
 
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
+
     def _make_layer(self, in_channels: int, channels: int, n_blocks: int, stride: int) -> nn.Sequential:
         layers = []
         layers.append(self.block(in_channels, channels, stride=stride))
@@ -164,6 +167,8 @@ class ResNet50(ResNet):
         
 
     def forward(self, x: Tensor) -> tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:
+
+        x = self.quant(x)
         
         x = self.conv1(x)
         x = self.bn1(x)
@@ -173,6 +178,12 @@ class ResNet50(ResNet):
         x3 = self.layer2(x2) # 512 channels
         x4 = self.layer3(x3) # 1024 channels
         out = self.layer4(x4) # 2048 channels
+
+        x1 = self.dequant(x1)
+        x2 = self.dequant(x2)
+        x3 = self.dequant(x3)
+        x4 = self.dequant(x4)
+        out = self.dequant(out)
 
         return x1, x2, x3, x4, out
 
