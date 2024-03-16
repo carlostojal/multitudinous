@@ -114,14 +114,14 @@ if __name__ == "__main__":
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
 
-        print(f'Epoch {epoch+1}/{config.epochs}, Loss: {loss.item()}')
+        print(f'\rEpoch {epoch+1}/{config.epochs}, Loss: {loss.item()}')
 
         # save the model
         print("Saving the model...", end=" ")
         pretrainer_path = os.path.join(args.output, f"img_pretrainer_{epoch+1}.pth")
         torch.save(img_pretrainer.state_dict(), pretrainer_path)
         backbone_path = os.path.join(args.output, f"img_backbone_{epoch+1}.pth")
-        torch.save(img_pretrainer.resnet.state_dict(), backbone_path)
+        torch.save(img_pretrainer.encoder.state_dict(), backbone_path)
         print("done.")
 
     print("End time: ", datetime.datetime.now().strftime("%H:%M:%S %Y-%m-%d"))
