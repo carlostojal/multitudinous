@@ -26,6 +26,7 @@ if __name__ == "__main__":
     config: PreTrainingConfig = PreTrainingConfig()
     config.parse_from_file(args.config)
     img_pretrainer: torch.nn.Module = build_img_pretraining(config.name, 4, args.weights)
+    print(img_pretrainer)
     print("done.")
 
     # load the dataset

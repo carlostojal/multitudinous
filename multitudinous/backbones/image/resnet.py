@@ -6,6 +6,7 @@ from typing import Type, Union, Optional
 from multitudinous.backbones.image.attention import SqueezeAndExcitation, ConvolutionalBlockAttentionModule
 
 class BottleneckBlock(nn.Module):
+    expansion: int = 4
     def __init__(self,
                  in_channels: int,
                  channels: int,
@@ -16,13 +17,13 @@ class BottleneckBlock(nn.Module):
         self.expansion = expansion
 
         self.conv1 = nn.Conv2d(in_channels, channels, kernel_size=1, stride=stride, bias=False)
-        self.bn1 = nn.BatchNorm2d(in_channels)
+        self.bn1 = nn.BatchNorm2d(channels)
 
         self.conv2 = nn.Conv2d(channels, channels, kernel_size=3, stride=1, padding=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(in_channels)
+        self.bn2 = nn.BatchNorm2d(channels)
 
         self.conv3 = nn.Conv2d(channels, channels * self.expansion, kernel_size=1, stride=1, bias=False)
-        self.bn3 = nn.BatchNorm2d(in_channels * self.expansion)
+        self.bn3 = nn.BatchNorm2d(channels * self.expansion)
 
         self.shortcut = None
         if stride != 1 or in_channels != channels * self.expansion:
@@ -132,7 +133,7 @@ class CBAMBottleneckBlock(BottleneckBlock):
 class ResNet(ABC, nn.Module):
     def __init__(self, block: Type[Union[BottleneckBlock,SEBottleneckBlock,CBAMBottleneckBlock]], in_channels: int):
         super().__init__()
-        self.block = block
+        self.block: BottleneckBlock = block
         self.in_channels = in_channels
         pass
 
@@ -148,19 +149,22 @@ class ResNet50(ResNet):
 
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
-        self.layer1 = self._make_layer(64, 64, 3, stride=1)
-        self.layer2 = self._make_layer(256, 128, 4, stride=2)
-        self.layer3 = self._make_layer(512, 256, 6, stride=2)
-        self.layer4 = self._make_layer(1024, 512, 8, stride=2)
+        self.inplanes = 64
+
+        self.layer1 = self._make_layer(64, 3, stride=1) # 64 -> 256
+        self.layer2 = self._make_layer(128, 4, stride=2) # 128 -> 512
+        self.layer3 = self._make_layer(256, 6, stride=2) # 256 -> 1024
+        self.layer4 = self._make_layer(512, 8, stride=2) # 512 -> 2048
 
         self.quant = QuantStub()
         self.dequant = DeQuantStub()
 
-    def _make_layer(self, in_channels: int, channels: int, n_blocks: int, stride: int) -> nn.Sequential:
+    def _make_layer(self, channels: int, n_blocks: int, stride: int) -> nn.Sequential:
         layers = []
-        layers.append(self.block(in_channels, channels, stride=stride))
+        layers.append(self.block(self.inplanes, channels, stride=stride))
+        self.inplanes = channels * self.block.expansion
         for _ in range(1, n_blocks):
-            layers.append(self.block(channels, channels, stride=1))
+            layers.append(self.block(self.inplanes, channels, stride=1))
         return nn.Sequential(*layers)
         
 
@@ -169,10 +173,10 @@ class ResNet50(ResNet):
         x = self.quant(x)
         
         x = self.conv1(x)
-        x = self.bn1(x)
-        x1 = self.maxpool(x) # 64 channels
+        x1 = self.bn1(x)
+        x = self.maxpool(x1) # 64 channels
 
-        x2 = self.layer1(x1) # 256 channels
+        x2 = self.layer1(x) # 256 channels
         x3 = self.layer2(x2) # 512 channels
         x4 = self.layer3(x3) # 1024 channels
         out = self.layer4(x4) # 2048 channels

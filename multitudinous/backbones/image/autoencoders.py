@@ -5,7 +5,7 @@ from abc import ABC
 from multitudinous.backbones.image.resnet import ResNet50, SEResNet50, CBAMResNet50
     
 class ResNetAutoEncoder(ABC, nn.Module):
-    def __init__(self, encoder: Type[Union[ResNet50, SEResNet50, CBAMResNet50]], in_channels: int = 3, out_channels: int = 3, with_residuals: bool = False) -> None:
+    def __init__(self, encoder: Type[Union[ResNet50, SEResNet50, CBAMResNet50]], in_channels: int = 3, out_channels: int = 1, with_residuals: bool = False) -> None:
         super().__init__()
 
         self.in_channels = in_channels
@@ -18,6 +18,8 @@ class ResNetAutoEncoder(ABC, nn.Module):
         self.block2 = self._make_block(1024, 512)
         self.block3 = self._make_block(512, 256)
         self.block4 = self._make_block(256, 64)
+        self.block5 = self._make_block(64, 64)
+        self.conv = nn.Conv2d(64, out_channels, kernel_size=1)
 
     def _make_block(self, in_channels: int, out_channels: int) -> nn.Module:
         return nn.Sequential(
@@ -42,46 +44,49 @@ class ResNetAutoEncoder(ABC, nn.Module):
             out = self.block2(out)
             out = self.block3(out)
             out = self.block4(out)
+        
+        out = self.block5(out) # final upscale
+        out = self.conv(out) # channel reduction
 
         return out
 
 class ResNet50AE(ResNetAutoEncoder):
-    def __init__(self, in_channels: int = 3, out_channels: int = 3) -> None:
+    def __init__(self, in_channels: int = 3, out_channels: int = 1) -> None:
         super().__init__(encoder=ResNet50, in_channels=in_channels, out_channels=out_channels, with_residuals=False)
 
     def forward(self, x: Tensor) -> Tensor:
         return super().forward(x)
     
 class SEResNet50AE(ResNetAutoEncoder):
-    def __init__(self, in_channels: int = 3, out_channels: int = 3) -> None:
+    def __init__(self, in_channels: int = 3, out_channels: int = 1) -> None:
         super().__init__(encoder=SEResNet50, in_channels=in_channels, out_channels=out_channels, with_residuals=False)
 
     def forward(self, x: Tensor) -> Tensor:
         return super().forward(x)
     
 class CBAMResNet50AE(ResNetAutoEncoder):
-    def __init__(self, in_channels: int = 3, out_channels: int = 3) -> None:
+    def __init__(self, in_channels: int = 3, out_channels: int = 1) -> None:
         super().__init__(encoder=CBAMResNet50, in_channels=in_channels, out_channels=out_channels, with_residuals=False)
 
     def forward(self, x: Tensor) -> Tensor:
         return super().forward(x)
     
 class ResNet50UNet(ResNetAutoEncoder):
-    def __init__(self, in_channels: int = 3, out_channels: int = 3) -> None:
+    def __init__(self, in_channels: int = 3, out_channels: int = 1) -> None:
         super().__init__(encoder=ResNet50, in_channels=in_channels, out_channels=out_channels, with_residuals=True)
 
     def forward(self, x: Tensor) -> Tensor:
         return super().forward(x)
     
 class SEResNet50UNet(ResNetAutoEncoder):
-    def __init__(self, in_channels: int = 3, out_channels: int = 3) -> None:
+    def __init__(self, in_channels: int = 3, out_channels: int = 1) -> None:
         super().__init__(encoder=SEResNet50, in_channels=in_channels, out_channels=out_channels, with_residuals=True)
 
     def forward(self, x: Tensor) -> Tensor:
         return super().forward(x)
     
 class CBAMResNet50UNet(ResNetAutoEncoder):
-    def __init__(self, in_channels: int = 3, out_channels: int = 3) -> None:
+    def __init__(self, in_channels: int = 3, out_channels: int = 1) -> None:
         super().__init__(encoder=CBAMResNet50, in_channels=in_channels, out_channels=out_channels, with_residuals=True)
 
     def forward(self, x: Tensor) -> Tensor:
