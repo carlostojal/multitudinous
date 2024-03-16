@@ -79,7 +79,7 @@ class SEBottleneckBlock(BottleneckBlock):
     def __init__(self,
                  in_channels: int,
                  channels: int,
-                 expansion: int,
+                 expansion: int = 4,
                  stride: int = 1):
         super().__init__(in_channels, channels, expansion, stride)
         self.se = SqueezeAndExcitation(channels * expansion)
@@ -106,7 +106,7 @@ class CBAMBottleneckBlock(BottleneckBlock):
     def __init__(self,
                  in_channels: int,
                  channels: int,
-                 expansion: int,
+                 expansion: int = 4,
                  stride: int = 1):
         super().__init__(in_channels, channels, expansion, stride)
         self.cbam = ConvolutionalBlockAttentionModule(channels * expansion)
@@ -129,8 +129,9 @@ class CBAMBottleneckBlock(BottleneckBlock):
         return x
 
 
-class ResNet(ABC):
+class ResNet(ABC, nn.Module):
     def __init__(self, block: Type[Union[BottleneckBlock,SEBottleneckBlock,CBAMBottleneckBlock]], in_channels: int):
+        super().__init__()
         self.block = block
         self.in_channels = in_channels
         pass
@@ -139,11 +140,8 @@ class ResNet(ABC):
         pass
 
 class ResNet50(ResNet):
-    def __init__(self, block: Optional[Type[Union[BottleneckBlock,SEBottleneckBlock,CBAMBottleneckBlock]]], in_channels: int):
+    def __init__(self, block: Type[Union[BottleneckBlock,SEBottleneckBlock,CBAMBottleneckBlock]] = Type[BottleneckBlock], in_channels: int = 3):
         super().__init__(block, in_channels)
-
-        # 3, 4, 6, 3
-        self.layers = [3, 4, 6, 3]
 
         self.conv1 = nn.Conv2d(self.in_channels, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
@@ -189,14 +187,14 @@ class ResNet50(ResNet):
 
 class SEResNet50(ResNet50):
     def __init__(self, in_channels: int):
-        super().__init__(SEBottleneckBlock, in_channels)
+        super().__init__(block=SEBottleneckBlock, in_channels=in_channels)
 
     def forward(self, x: Tensor) -> tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:
         return super().forward(x)
 
 class CBAMResNet50(ResNet50):
     def __init__(self, in_channels: int):
-        super().__init__(CBAMBottleneckBlock, in_channels)
+        super().__init__(block=CBAMBottleneckBlock, in_channels=in_channels)
 
     def forward(self, x: Tensor) -> tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:
         return super().forward(x)
