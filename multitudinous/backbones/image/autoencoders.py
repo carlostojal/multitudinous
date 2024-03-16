@@ -28,9 +28,9 @@ class ResNetAutoEncoder(ABC, nn.Module):
         )
 
 
-    def forward(self, x: tuple[Tensor, Tensor, Tensor, Tensor, Tensor]) -> Tensor:
+    def forward(self, x: Tensor) -> Tensor:
 
-        x1, x2, x3, x4, x5 = x
+        x1, x2, x3, x4, x5 = self.encoder(x)
 
         if self.with_residuals:
             out = self.block1(x5) + x4
