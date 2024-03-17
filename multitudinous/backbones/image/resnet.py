@@ -142,7 +142,7 @@ class ResNet50(ResNet):
         self.layer1 = self._make_layer(64, 3, stride=1) # 64 -> 256
         self.layer2 = self._make_layer(128, 4, stride=2) # 128 -> 512
         self.layer3 = self._make_layer(256, 6, stride=2) # 256 -> 1024
-        self.layer4 = self._make_layer(512, 8, stride=2) # 512 -> 2048
+        self.layer4 = self._make_layer(512, 3, stride=2) # 512 -> 2048
 
         self.quant = QuantStub()
         self.dequant = DeQuantStub()
