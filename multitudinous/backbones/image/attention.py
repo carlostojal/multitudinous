@@ -77,7 +77,10 @@ class ConvolutionalBlockAttentionModule(AttentionModule):
         mc = torch.functional.F.relu(max + avg)
 
         # reshape to (BxCx1x1)
-        mc = mc.unsqueeze(0).unsqueeze(2).unsqueeze(3)
+        # if it doesn't have a batch dimension, add one
+        if len(mc.shape) == 1:
+            mc = mc.unsqueeze(0)
+        mc = mc.unsqueeze(2).unsqueeze(3)
 
         # apply channel attention to the input tensor
         # (BxCxHxW) * (BxCx1x1)
