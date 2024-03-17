@@ -74,7 +74,7 @@ class ConvolutionalBlockAttentionModule(AttentionModule):
         # channel attention
         max = self.fc(max) # apply fully connected layer (W0, W1)
         avg = self.fc(avg) # apply fully connected layer (W0, W1)
-        mc = nn.ReLU(max + avg)
+        mc = torch.functional.F.relu(max + avg)
 
         # reshape to (BxCx1x1)
         mc = mc.unsqueeze(0).unsqueeze(2).unsqueeze(3)
@@ -89,7 +89,7 @@ class ConvolutionalBlockAttentionModule(AttentionModule):
         avg_s = torch.mean(x1, dim=1, keepdim=True)
 
         pool_s = torch.cat([max_s, avg_s], dim=1) # concatenate the two tensors
-        ms = nn.ReLU(self.conv(pool_s)) # apply convolutional layer
+        ms = torch.functional.F.relu(self.conv(pool_s)) # apply convolutional layer
 
         # apply spatial attention
         x1 = self.spatial_attention.mul(x1, ms)
