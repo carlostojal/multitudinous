@@ -6,10 +6,12 @@ from multitudinous.utils.dataset_builder import build_img_dataset
 from multitudinous.utils.loss_builder import build_loss_fn
 from multitudinous.configs.pretraining.PreTrainingConfig import PreTrainingConfig
 from multitudinous.configs.datasets.DatasetConfig import DatasetConfig
+from multitudinous.loss_fns import rmse, rel, delta
 import torch
 from torch.utils.data import DataLoader
 import argparse
 import datetime
+import wandb
 
 if __name__ == "__main__":
 
@@ -29,20 +31,31 @@ if __name__ == "__main__":
     print(img_pretrainer)
     print("done.")
 
+    # initialize wandb
+    print("Initializing wandb...", end=" ")
+    wandb.init(
+        project='img_pretrainer',
+        name=f"{config.name}_{datetime.datetime.now().strftime('%H:%M:%S_%Y-%m-%d')}",
+        config=config.__dict__
+    )
+    print("done.")
+
     # load the dataset
     print("Loading dataset...", end=" ")
     dataset_conf: DatasetConfig = DatasetConfig()
     dataset_conf.parse_from_file(args.dataset)
-    dataset = build_img_dataset(dataset_conf.name, dataset_conf.path)
+    train_set, val_set, test_set = build_img_dataset(dataset_conf.name, dataset_conf.base_path, dataset_conf.train_path, dataset_conf.val_path, dataset_conf.test_path)
     print("done.")
 
     # create the dataloader
     print("Creating the dataloader...", end=" ")
-    dataloader: DataLoader = DataLoader(dataset, batch_size=config.batch_size, shuffle=True)
+    train_loader: DataLoader = DataLoader(train_set, batch_size=config.batch_size, shuffle=True)
+    val_loader: DataLoader = DataLoader(val_set, batch_size=config.batch_size, shuffle=True)
+    test_loader: DataLoader = DataLoader(test_set, batch_size=config.batch_size, shuffle=True)
     print("done.")
 
     # train the image backbone
-    print("Training the image backbone...", end=" ")
+    print("Training the image backbone...")
 
     print("Start time: ", datetime.datetime.now().strftime("%H:%M:%S %Y-%m-%d"))
 
@@ -62,9 +75,9 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     img_pretrainer.to(device)
 
-    total_samples = len(dataloader)
-    # sample number from which to start validation
-    train_thres = int(total_samples * config.train_percent)
+    train_len = len(train_loader)
+    val_len = len(val_loader)
+    test_len = len(test_loader)
 
     # train the model
     for epoch in range(config.epochs):
@@ -75,7 +88,7 @@ if __name__ == "__main__":
         curr_sample = 0
 
         # iterate samples
-        for rgb, depth in dataloader:
+        for rgb, depth in train_loader:
 
             # zero the gradients for each batch
             optim.zero_grad()
@@ -89,32 +102,116 @@ if __name__ == "__main__":
             # forward pass
             pred_depth = img_pretrainer(rgbd)
 
+            train_loss_total = 0
+            rmse_total = 0
+            rel_total = 0
+            delta1_total = 0
+            delta2_total = 0
+            delta3_total = 0
+
             # compute the loss
-            loss_total = 0
-            for i in range(len(pred_depth)):
-                loss_total += loss_fn(pred_depth[i], depth[i])
-            loss = loss_total / len(pred_depth)
+            for i in range(pred_depth.shape[0]): # batch size
+                train_loss_total += loss_fn(pred_depth[i], depth[i])
+                rmse_total += rmse(pred_depth[i], depth[i])
+                rel_total += rel(pred_depth[i], depth[i])
+                delta1_total += delta(pred_depth[i], depth[i], 1)
+                delta2_total += delta(pred_depth[i], depth[i], 2)
+                delta3_total += delta(pred_depth[i], depth[i], 3)
 
-            if curr_sample < train_thres:
-                # compute the gradients
-                loss.backward()
+                curr_sample += 1
 
-                # adjust the weights
-                optim.step()
-            else:
-                img_pretrainer.eval() # set the model to evaluation mode
+            train_loss = train_loss_total / pred_depth.shape[0]
+            rmse_loss = rmse_total / pred_depth.shape[0]
+            rel_loss = rel_total / pred_depth.shape[0]
+            delta1_loss = delta1_total / pred_depth.shape[0]
+            delta2_loss = delta2_total / pred_depth.shape[0]
+            delta3_loss = delta3_total / pred_depth.shape[0]
 
-            curr_sample += 1
+            del rgb, depth, rgbd, pred_depth
 
-            print(f"\rEpoch {epoch+1}/{config.epochs}, Sample {curr_sample}/{total_samples}, Loss: {loss.item()}", end="")
+            # compute the gradients
+            train_loss.backward()
 
-            del rgb, depth, rgbd, pred_depth, loss_total
+            # adjust the weights
+            optim.step()
 
-            # cleanup
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
+            print(f"\rEpoch {epoch+1}/{config.epochs}, Sample {curr_sample}/{train_len}, Train Loss: {train_loss.item()}", end=" ")
 
-        print(f'\rEpoch {epoch+1}/{config.epochs}, Loss: {loss.item()}')
+        print()
+
+        wandb.log({
+            'epoch': epoch+1,
+            'train_loss': train_loss.item(),
+            'rmse': rmse_loss.item(),
+            'rel': rel_loss.item(),
+            'delta1': delta1_loss.item(),
+            'delta2': delta2_loss.item(),
+            'delta3': delta3_loss.item()
+        })
+
+        del train_loss_total, rmse_total, rel_total, delta1_total, delta2_total, delta3_total
+        del train_loss, rmse_loss, rel_loss, delta1_loss, delta2_loss, delta3_loss
+        
+        # set the model to evaluation mode
+        img_pretrainer.eval()
+
+        # evaluate the model
+
+        curr_sample = 0
+        for rgb, depth in val_loader:
+
+            # build the rgb-d image
+            rgb = rgb.to(device)
+            depth = depth.to(device)
+            depth = depth.unsqueeze(1)
+            rgbd = torch.cat((rgb, depth), dim=1)
+
+            # forward pass
+            pred_depth = img_pretrainer(rgbd)
+
+            val_loss_total = 0
+            rmse_total = 0
+            rel_total = 0
+            delta1_total = 0
+            delta2_total = 0
+            delta3_total = 0
+
+            # compute the loss
+            for i in range(pred_depth.shape[0]): # batch size
+                val_loss_total += loss_fn(pred_depth[i], depth[i])
+                rmse_total += rmse(pred_depth[i], depth[i])
+                rel_total += rel(pred_depth[i], depth[i])
+                delta1_total += delta(pred_depth[i], depth[i], 1)
+                delta2_total += delta(pred_depth[i], depth[i], 2)
+                delta3_total += delta(pred_depth[i], depth[i], 3)
+
+                curr_sample += 1
+            
+            val_loss = val_loss_total / pred_depth.shape[0]
+            rmse_loss = rmse_total / pred_depth.shape[0]
+            rel_loss = rel_total / pred_depth.shape[0]
+            delta1_loss = delta1_total / pred_depth.shape[0]
+            delta2_loss = delta2_total / pred_depth.shape[0]
+            delta3_loss = delta3_total / pred_depth.shape[0]
+
+            del rgb, depth, rgbd, pred_depth
+
+            print(f"\rEpoch {epoch+1}/{config.epochs}, Sample {curr_sample}/{val_len}, Val Loss: {val_loss.item()}", end=" ")
+
+        print()
+
+        wandb.log({
+            'epoch': epoch+1,
+            'val_loss': val_loss.item(),
+            'rmse': rmse_loss.item(),
+            'rel': rel_loss.item(),
+            'delta1': delta1_loss.item(),
+            'delta2': delta2_loss.item(),
+            'delta3': delta3_loss.item()
+        })
+
+        del val_loss_total, rmse_total, rel_total, delta1_total, delta2_total, delta3_total
+        del val_loss, rmse_loss, rel_loss, delta1_loss, delta2_loss, delta3_loss
 
         # save the model
         print("Saving the model...", end=" ")
@@ -126,7 +223,69 @@ if __name__ == "__main__":
         torch.save(img_pretrainer.encoder.state_dict(), backbone_path)
         print("done.")
 
+
+    curr_sample = 0
+
+    # test the model
+    print("Testing the model...", end=" ")
+    for rgb, depth in test_loader:
+
+        # build the rgb-d image
+        rgb = rgb.to(device)
+        depth = depth.to(device)
+        depth = depth.unsqueeze(1)
+        rgbd = torch.cat((rgb, depth), dim=1)
+
+        # forward pass
+        pred_depth = img_pretrainer(rgbd)
+
+        test_loss_total = 0
+        rmse_total = 0
+        rel_total = 0
+        delta1_total = 0
+        delta2_total = 0
+        delta3_total = 0
+        curr_sample = 0
+
+        # compute the loss
+        for i in range(pred_depth.shape[0]): # batch size
+            test_loss_total += loss_fn(pred_depth[i], depth[i])
+            rmse_total += rmse(pred_depth[i], depth[i])
+            rel_total += rel(pred_depth[i], depth[i])
+            delta1_total += delta(pred_depth[i], depth[i], 1)
+            delta2_total += delta(pred_depth[i], depth[i], 2)
+            delta3_total += delta(pred_depth[i], depth[i], 3)
+
+            curr_sample += 1
+
+        test_loss = test_loss_total / pred_depth.shape[0]
+        rmse_loss = rmse_total / pred_depth.shape[0]
+        rel_loss = rel_total / pred_depth.shape[0]
+        delta1_loss = delta1_total / pred_depth.shape[0]
+        delta2_loss = delta2_total / pred_depth.shape[0]
+        delta3_loss = delta3_total / pred_depth.shape[0]
+
+        print(f"\rTesting sample {curr_sample}/{test_len}, Test Loss: {test_loss.item()}", end=" ")
+
+    print()
+
+    wandb.log({
+        'epoch': epoch+1,
+        'test_loss': test_loss.item(),
+        'rmse': rmse_loss.item(),
+        'rel': rel_loss.item(),
+        'delta1': delta1_loss.item(),
+        'delta2': delta2_loss.item(),
+        'delta3': delta3_loss.item()
+    })
+
+    del test_loss_total, rmse_total, rel_total, delta1_total, delta2_total, delta3_total
+    del test_loss, rmse_loss, rel_loss, delta1_loss, delta2_loss, delta3_loss
+
     print("End time: ", datetime.datetime.now().strftime("%H:%M:%S %Y-%m-%d"))
+
+    # finish logging
+    wandb.finish()
 
     print("done.")
 
