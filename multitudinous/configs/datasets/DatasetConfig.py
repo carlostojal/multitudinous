@@ -4,7 +4,10 @@ from ..Config import Config
 class DatasetConfig(Config):
     def __init__(self) -> None:
         self.name = None
-        self.path = None
+        self.base_path = None
+        self.train_path = None
+        self.val_path = None
+        self.test_path = None
 
     def parse_from_file(self, filename: str) -> None:
         
@@ -14,4 +17,7 @@ class DatasetConfig(Config):
             conf = yaml.safe_load(f)
 
             self.name = conf['name']
-            self.path = conf['path']
+            self.base_path = conf['base_path']
+            self.train_path = conf['train_path']
+            self.val_path = conf['val_path']
+            self.test_path = conf['test_path']

@@ -1,2 +1,5 @@
 name: tum_rgbd
-path: ../data/tum_rgbd
+base_path: ../data/tum_rgbd1
+train_path: train
+val_path: val
+test_path: test
