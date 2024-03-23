@@ -12,19 +12,27 @@ class BottleneckBlock(nn.Module):
                  in_channels: int,
                  channels: int,
                  expansion: int = 4,
-                 stride: int = 1):
+                 stride: int = 1,
+                 with_dropout: bool = True):
         super().__init__()
 
         self.expansion = expansion
+        self.with_dropout = with_dropout
 
         self.conv1 = nn.Conv2d(in_channels, channels, kernel_size=1, stride=stride, bias=False)
         self.bn1 = nn.BatchNorm2d(channels)
+        if with_dropout:
+            self.dropout1 = nn.Dropout2d(p=0.5)
 
         self.conv2 = nn.Conv2d(channels, channels, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(channels)
+        if with_dropout:
+            self.dropout2 = nn.Dropout2d(p=0.5)
 
         self.conv3 = nn.Conv2d(channels, channels * self.expansion, kernel_size=1, stride=1, bias=False)
         self.bn3 = nn.BatchNorm2d(channels * self.expansion)
+        if with_dropout:
+            self.dropout3 = nn.Dropout2d(p=0.5)
 
         self.shortcut = None
         if stride != 1 or in_channels != channels * self.expansion:
@@ -44,14 +52,20 @@ class BottleneckBlock(nn.Module):
 
         out = self.conv1(x)
         out = self.bn1(out)
+        if self.with_dropout:
+            out = self.dropout1(out)
         out = self.relu(out)
 
         out = self.conv2(out)
         out = self.bn2(out)
+        if self.with_dropout:
+            out = self.dropout2(out)
         out = self.relu(out)
 
         out = self.conv3(out)
         out = self.bn3(out)
+        if self.with_dropout:
+            out = self.dropout3(out)
 
         if self.shortcut is not None:
             identity = self.shortcut(x)
