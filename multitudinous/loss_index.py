@@ -1,5 +1,7 @@
-from .loss_fns import rmse
+from .loss_fns import rmse, rel, delta
 
 img_loss_fns = {
-    'rmse': rmse
+    'rmse': rmse,
+    'rel': rel,
+    'delta': delta
 }
