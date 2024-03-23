@@ -31,6 +31,12 @@ if __name__ == "__main__":
     print(img_pretrainer)
     print("done.")
 
+    # replace the encoder with a quantization-aware encoder
+    encoder_prepared: torch.nn.Module = img_pretrainer.encoder
+    encoder_prepared.qconfig = torch.ao.quantization.get_default_qat_qconfig('x86')
+    encoder_prepared = torch.ao.quantization.prepare_qat(img_pretrainer.encoder.train())
+    img_pretrainer.encoder = encoder_prepared
+
     # initialize wandb
     print("Initializing wandb...", end=" ")
     wandb.init(
