@@ -50,12 +50,12 @@ if __name__ == "__main__":
     print("Loading dataset...", end=" ")
     dataset_conf: DatasetConfig = DatasetConfig()
     dataset_conf.parse_from_file(args.dataset)
-    _, _, test_set = build_img_dataset(dataset_conf.name, dataset_conf.base_path, dataset_conf.train_path, dataset_conf.val_path, dataset_conf.test_path)
+    train_set, _, _ = build_img_dataset(dataset_conf.name, dataset_conf.base_path, dataset_conf.train_path, dataset_conf.val_path, dataset_conf.test_path)
     print("done.")
 
     # create the dataloader
     print("Creating the dataloader...", end=" ")
-    dataloader: DataLoader = DataLoader(test_set, batch_size=1, shuffle=True)
+    dataloader: DataLoader = DataLoader(train_set, batch_size=1, shuffle=False)
     print("done.")
 
     # quantize the image backbone
