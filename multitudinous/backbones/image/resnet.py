@@ -89,8 +89,9 @@ class SEBottleneckBlock(BottleneckBlock):
                  in_channels: int,
                  channels: int,
                  expansion: int = 4,
-                 stride: int = 1):
-        super().__init__(in_channels, channels, expansion, stride)
+                 stride: int = 1,
+                 with_dropout: bool = True):
+        super().__init__(in_channels, channels, expansion, stride, with_dropout)
         self.se = SqueezeAndExcitation(channels * expansion)
 
     def forward(self, x: Tensor) -> Tensor:
@@ -113,8 +114,9 @@ class CBAMBottleneckBlock(BottleneckBlock):
                  in_channels: int,
                  channels: int,
                  expansion: int = 4,
-                 stride: int = 1):
-        super().__init__(in_channels, channels, expansion, stride)
+                 stride: int = 1,
+                 with_dropout: bool = True):
+        super().__init__(in_channels, channels, expansion, stride, with_dropout)
         self.cbam = ConvolutionalBlockAttentionModule(channels * expansion)
 
     def forward(self, x: Tensor) -> Tensor:
@@ -133,18 +135,19 @@ class CBAMBottleneckBlock(BottleneckBlock):
 
 
 class ResNet(ABC, nn.Module):
-    def __init__(self, block: Type[Union[BottleneckBlock,SEBottleneckBlock,CBAMBottleneckBlock]], in_channels: int):
+    def __init__(self, block: Type[Union[BottleneckBlock,SEBottleneckBlock,CBAMBottleneckBlock]], in_channels: int = 4, with_dropout: bool = True):
         super().__init__()
         self.block: BottleneckBlock = block
         self.in_channels = in_channels
+        self.with_dropout = with_dropout
         pass
 
     def forward(self, x: Tensor) -> Tensor:
         pass
 
 class ResNet50(ResNet):
-    def __init__(self, block: Type[Union[BottleneckBlock,SEBottleneckBlock,CBAMBottleneckBlock]] = BottleneckBlock, in_channels: int = 3):
-        super().__init__(block, in_channels)
+    def __init__(self, block: Type[Union[BottleneckBlock,SEBottleneckBlock,CBAMBottleneckBlock]] = BottleneckBlock, in_channels: int = 4, with_dropout: bool = True):
+        super().__init__(block, in_channels, with_dropout)
 
         self.conv1 = nn.Conv2d(self.in_channels, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
@@ -163,7 +166,7 @@ class ResNet50(ResNet):
 
     def _make_layer(self, channels: int, n_blocks: int, stride: int) -> nn.Sequential:
         layers = []
-        layers.append(self.block(self.inplanes, channels, stride=stride))
+        layers.append(self.block(self.inplanes, channels, stride=stride, with_dropout=self.with_dropout))
         self.inplanes = channels * self.block.expansion
         for _ in range(1, n_blocks):
             layers.append(self.block(self.inplanes, channels, stride=1))
