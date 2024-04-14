@@ -4,7 +4,7 @@ from torch.nn.modules.normalization import LayerNorm
 
 class ViLBERT_Encoder(nn.Module):
     """
-    Vision-and-Language BERT Encoder
+    Vision-and-Language BERT Encoder with modality cross-attention
 
     Args:
     - embedding_dim (int): the dimension of the embedding
@@ -57,3 +57,48 @@ class ViLBERT_Encoder(nn.Module):
         q = self.ln(q + q_residual)
 
         return q
+
+class ViLBERT(nn.Module):
+    """
+    Vision-and-Language BERT
+
+    Args:
+    - embedding_dim (int): the dimension of the embedding
+    - num_heads (int): the number of heads in the multi-head attention
+    - num_layers (int): the number of layers in the encoder
+
+    """
+
+    def __init__(self, embedding_dim: int = 762, num_heads: int = 12, num_layers: int = 12) -> None:
+        super().__init__()
+
+        # initialize the encoder layers
+        img_encoders = []
+        pcl_encoders = []
+        for _ in range(num_layers):
+            img_encoders.append(ViLBERT_Encoder(embedding_dim, num_heads))
+            pcl_encoders.append(ViLBERT_Encoder(embedding_dim, num_heads))
+        self.img_encoders = nn.Sequential(*img_encoders)
+        self.pcl_encoders = nn.Sequential(*pcl_encoders)
+
+
+
+    def forward(self, img_embeddings: torch.Tensor, pcl_embeddings: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Forward pass of the Vision-and-Language BERT
+
+        Args:
+        - img_features: the image embeddings
+        - pcl_features: the patch embeddings
+
+        Returns:
+        - tuple[torch.Tensor, torch.Tensor]: the image and point cloud embeddings
+        """
+
+        # apply the image encoder
+        img_embeddings = self.img_encoders(img_embeddings, pcl_embeddings)
+
+        # apply the point cloud encoder
+        pcl_embeddings = self.pcl_encoders(pcl_embeddings, img_embeddings)
+
+        return img_embeddings, pcl_embeddings
