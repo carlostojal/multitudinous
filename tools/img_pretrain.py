@@ -9,6 +9,7 @@ from multitudinous.configs.datasets.DatasetConfig import DatasetConfig
 from multitudinous.loss_fns import rmse, rel, delta
 import torch
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 import argparse
 import datetime
 import wandb
@@ -32,12 +33,13 @@ if __name__ == "__main__":
     print("done.")
 
     # initialize wandb
-    print("Initializing wandb...", end=" ")
+    print("Initializing loggers...", end=" ")
     wandb.init(
         project='img_pretrainer',
         name=f"{config.name}_{datetime.datetime.now().strftime('%H:%M:%S_%Y-%m-%d')}",
         config=config.__dict__
     )
+    writer = SummaryWriter(f"runs/img_pretraniner/{config.name}_{datetime.datetime.now().strftime('%H:%M:%S_%Y-%m-%d')}")
     print("done.")
 
     # load the dataset
@@ -148,6 +150,12 @@ if __name__ == "__main__":
             'delta2': delta2_loss.item(),
             'delta3': delta3_loss.item()
         })
+        writer.add_scalar('Loss/train', train_loss.item(), epoch)
+        writer.add_scalar('RMSE/train', rmse_loss.item(), epoch)
+        writer.add_scalar('REL/train', rel_loss.item(), epoch)
+        writer.add_scalar('Delta1/train', delta1_loss.item(), epoch)
+        writer.add_scalar('Delta2/train', delta2_loss.item(), epoch)
+        writer.add_scalar('Delta3/train', delta3_loss.item(), epoch)
 
         del train_loss_total, rmse_total, rel_total, delta1_total, delta2_total, delta3_total
         del train_loss, rmse_loss, rel_loss, delta1_loss, delta2_loss, delta3_loss
@@ -209,6 +217,12 @@ if __name__ == "__main__":
             'delta2': delta2_loss.item(),
             'delta3': delta3_loss.item()
         })
+        writer.add_scalar('Loss/val', val_loss.item(), epoch)
+        writer.add_scalar('RMSE/val', rmse_loss.item(), epoch)
+        writer.add_scalar('REL/val', rel_loss.item(), epoch)
+        writer.add_scalar('Delta1/val', delta1_loss.item(), epoch)
+        writer.add_scalar('Delta2/val', delta2_loss.item(), epoch)
+        writer.add_scalar('Delta3/val', delta3_loss.item(), epoch)
 
         del val_loss_total, rmse_total, rel_total, delta1_total, delta2_total, delta3_total
         del val_loss, rmse_loss, rel_loss, delta1_loss, delta2_loss, delta3_loss
@@ -278,6 +292,12 @@ if __name__ == "__main__":
         'delta2': delta2_loss.item(),
         'delta3': delta3_loss.item()
     })
+    writer.add_scalar('Loss/test', test_loss.item(), epoch)
+    writer.add_scalar('RMSE/test', rmse_loss.item(), epoch)
+    writer.add_scalar('REL/test', rel_loss.item(), epoch)
+    writer.add_scalar('Delta1/test', delta1_loss.item(), epoch)
+    writer.add_scalar('Delta2/test', delta2_loss.item(), epoch)
+    writer.add_scalar('Delta3/test', delta3_loss.item(), epoch)
 
     del test_loss_total, rmse_total, rel_total, delta1_total, delta2_total, delta3_total
     del test_loss, rmse_loss, rel_loss, delta1_loss, delta2_loss, delta3_loss
@@ -286,6 +306,8 @@ if __name__ == "__main__":
 
     # finish logging
     wandb.finish()
+    writer.flush()
+    writer.close()
 
     print("done.")
 
