@@ -1,0 +1,59 @@
+import torch
+from torch import nn
+from torch.nn.modules.normalization import LayerNorm
+
+class ViLBERT_Encoder(nn.Module):
+    """
+    Vision-and-Language BERT Encoder
+
+    Args:
+    - embedding_dim (int): the dimension of the embedding
+    - num_heads (int): the number of heads in the multi-head attention
+    """
+
+    def __init__(self, embedding_dim: int = 762, num_heads: int = 12) -> None:
+        super().__init__()
+
+        # initialize the multi-head attention
+        self.mha = nn.MultiheadAttention(embed_dim=embedding_dim, num_heads=num_heads, batch_first=True)
+
+        # initialize the layer normalization
+        self.ln = LayerNorm(embedding_dim)
+
+        # initialize the feed-forward layer
+        self.ff = nn.Sequential(
+            nn.Linear(embedding_dim, 4 * embedding_dim), # in BERT, the feed-forward layer has 4 times the embedding dimension
+            nn.ReLU(),
+            nn.Linear(4 * embedding_dim, embedding_dim)
+        )
+
+    def forward(self, q: torch.Tensor, k_v: torch.Tensor) -> torch.Tensor:
+        """
+        Forward pass of the Vision-and-Language BERT Encoder with cross-attention
+
+        Args:
+        - q: the query tensor
+        - k_v: the key and value tensor
+
+        Returns:
+        - torch.Tensor: the output hidden states
+        """
+
+        q_residual = q # query residual connection
+
+        # apply the multi-head attention
+        q, _ = self.mha(q, k_v, k_v)
+
+        # apply the layer normalization (add & norm)
+        q = self.ln(q + q_residual)
+
+        # store the query residual connection
+        q_residual = q
+
+        # apply the feed-forward layer
+        q = self.ff(q)
+
+        # apply the layer normalization (add & norm)
+        q = self.ln(q + q_residual)
+
+        return q
