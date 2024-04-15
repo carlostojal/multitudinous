@@ -142,6 +142,38 @@ class PointNetClassification(PointNet):
         x = torch.softmax(x, dim=1)
 
         return x
+    
+class PointNetSegmentation(PointNet):
+
+    def __init__(self, point_dim: int = 3, out_dim: int = 4) -> None:
+        super().__init__(point_dim)
+
+        self.out_dim = out_dim
+
+        self.conv1 = nn.Conv1d(1088, 512, 1) # 1088 = 1024 + 64
+        self.conv2 = nn.Conv1d(512, 256, 1)
+        self.conv3 = nn.Conv1d(256, 128, 1)
+        self.conv4 = nn.Conv1d(128, out_dim, 1)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+
+        # extract features
+        x, x_t2 = super().forward(x)
+
+        # max pooling
+        x = torch.max(x, 2, keepdim=True)[0]
+
+        # concatenate feature transform
+        x = torch.cat((x, x_t2), dim=1)
+
+        # FC layers
+        x = torch.relu(self.conv1(x))
+        x = torch.relu(self.conv2(x))
+        x = torch.relu(self.conv3(x))
+        x = self.conv4(x)
+
+        return x
+
 
 class PointNetEmbedding(PointNet):
 
