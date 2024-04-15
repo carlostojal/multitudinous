@@ -88,12 +88,16 @@ class ViLBERT(nn.Module):
         Forward pass of the Vision-and-Language BERT
 
         Args:
-        - img_features: the image embeddings
-        - pcl_features: the patch embeddings
+        - img_embeddings: the image embeddings
+        - pcl_embeddings: the point cloud embeddings
 
         Returns:
         - tuple[torch.Tensor, torch.Tensor]: the image and point cloud embeddings
         """
+
+        # verify the input shapes
+        if img_embeddings.shape != pcl_embeddings.shape:
+            raise ValueError("The image and point cloud embeddings must have the same shape!")
 
         # apply the image encoder
         img_embeddings = self.img_encoders(img_embeddings, pcl_embeddings)
