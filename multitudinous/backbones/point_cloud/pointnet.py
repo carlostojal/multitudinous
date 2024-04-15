@@ -106,12 +106,14 @@ class PointNet(nn.Module):
         t = self.t2(x)
         x *= t
 
+        x_t2 = x
+
         # MLP
         x = self.bn2(self.conv2(x))
         x = self.bn3(self.conv3(x))
 
         # return a tensor with shape (batch_size, 1024, num_points)
-        return x
+        return x, x_t2
 
 class PointNetClasification(PointNet):
 
