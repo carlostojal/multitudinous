@@ -112,31 +112,31 @@ class PointNet(nn.Module):
         x = self.bn2(self.conv2(x))
         x = self.bn3(self.conv3(x))
 
-        # return a tensor with shape (batch_size, 1024, num_points)
+        # return a tensor with shape (batch_size, 1024, num_points) and the feature transform
         return x, x_t2
 
-class PointNetClasification(PointNet):
+class PointNetClassification(PointNet):
 
     def __init__(self, point_dim: int = 3, num_classes: int = 512) -> None:
         super().__init__(point_dim)
 
         self.num_classes = num_classes
 
-        self.fc1 = nn.Linear(1024, 512)
-        self.fc2 = nn.Linear(512, 256)
-        self.fc3 = nn.Linear(256, num_classes)
+        self.conv1 = nn.Conv1d(1024, 512, 1)
+        self.conv2 = nn.Conv1d(512, 256, 1)
+        self.conv3 = nn.Conv1d(256, num_classes, 1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # extract features
-        x = super().forward(x)
+        x, _ = super().forward(x)
 
         # max pooling
         x = torch.max(x, 2, keepdim=True)[0]
 
         # FC layers
-        x = torch.relu(self.fc1(x))
-        x = torch.relu(self.fc2(x))
-        x = self.fc3(x)
+        x = torch.relu(self.conv1(x))
+        x = torch.relu(self.conv2(x))
+        x = self.conv3(x)
 
         # softmax
         x = torch.softmax(x, dim=1)
