@@ -125,7 +125,7 @@ class PointNetClasification(PointNet):
         self.fc3 = nn.Linear(256, num_classes)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # extract feature
+        # extract features
         x = super().forward(x)
 
         # max pooling
@@ -138,5 +138,34 @@ class PointNetClasification(PointNet):
 
         # softmax
         x = torch.softmax(x, dim=1)
+
+        return x
+
+class PointNetEmbedding(PointNet):
+
+    def __init__(self, point_dim: int = 3, sequence_len: int = 1024, embedding_dim: int = 768) -> None:
+        super().__init__(point_dim)
+
+        self.sequence_len = sequence_len
+        self.embedding_dim = embedding_dim
+
+        self.fc1 = nn.Linear(1024, 512)
+        self.fc2 = nn.Linear(512, 256)
+        self.fc3 = nn.Linear(256, embedding_dim * sequence_len)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # extract features
+        x = super().forward(x)
+
+        # max pooling
+        x = torch.max(x, 2, keepdim=True)[0]
+
+        # FC layers
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        x = self.fc3(x)
+
+        # reshape to (batch_size, sequence_len, embedding_dim)
+        x = x.view(-1, self.sequence_len, self.embedding_dim)
 
         return x
