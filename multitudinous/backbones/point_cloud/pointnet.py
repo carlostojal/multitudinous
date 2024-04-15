@@ -151,21 +151,21 @@ class PointNetEmbedding(PointNet):
         self.sequence_len = sequence_len
         self.embedding_dim = embedding_dim
 
-        self.fc1 = nn.Linear(1024, 512)
-        self.fc2 = nn.Linear(512, 256)
-        self.fc3 = nn.Linear(256, embedding_dim * sequence_len)
+        self.conv1 = nn.Conv1d(1024, 512, 1)
+        self.conv2 = nn.Conv1d(512, 256, 1)
+        self.conv3 = nn.Conv1d(256, embedding_dim * sequence_len, 1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # extract features
-        x = super().forward(x)
+        x, _ = super().forward(x)
 
         # max pooling
         x = torch.max(x, 2, keepdim=True)[0]
 
         # FC layers
-        x = torch.relu(self.fc1(x))
-        x = torch.relu(self.fc2(x))
-        x = self.fc3(x)
+        x = torch.relu(self.conv1(x))
+        x = torch.relu(self.conv2(x))
+        x = self.conv3(x)
 
         # reshape to (batch_size, sequence_len, embedding_dim)
         x = x.view(-1, self.sequence_len, self.embedding_dim)
