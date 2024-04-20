@@ -145,12 +145,14 @@ class PointNetClassification():
 
         return x
     
-class PointNetSegmentation(PointNet):
+class PointNetSegmentation():
 
     def __init__(self, point_dim: int = 3, out_dim: int = 4) -> None:
-        super().__init__(point_dim)
+        super().__init__()
 
         self.out_dim = out_dim
+
+        self.feature_extractor = PointNet(point_dim)
 
         self.conv1 = nn.Conv1d(1088, 512, 1) # 1088 = 1024 + 64
         self.conv2 = nn.Conv1d(512, 256, 1)
@@ -160,7 +162,7 @@ class PointNetSegmentation(PointNet):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
 
         # extract features
-        x, x_t2 = super().forward(x)
+        x, x_t2 = self.feature_extractor(x)
 
         # max pooling
         x = torch.max(x, 2, keepdim=True)[0]
