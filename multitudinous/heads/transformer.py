@@ -36,3 +36,32 @@ class GridDecoder(nn.Module):
         grid = self.deconv3(grid)
 
         return grid
+    
+class ConesDecoder(nn.Module):
+
+    """
+    Decodes a set of 2-dimensional cone positions and classes from the embeddings.
+    For Formula Student Driverless.
+    """
+
+    def __init__(self, embedding_dim: int = 762) -> None:
+        super().__init__()
+
+        # TODO
+
+        raise NotImplementedError("Cone decoder is not implemented yet.")
+
+    def forward(self, embeddings: torch.Tensor) -> torch.Tensor:
+        """
+        Forward pass of the cone decoder.
+
+        Args:
+        - embeddings: the embeddings
+
+        Returns:
+        - torch.Tensor: the cone positions and classes
+        """
+
+        # TODO
+
+        raise NotImplementedError("Cone decoder is not implemented yet.")
