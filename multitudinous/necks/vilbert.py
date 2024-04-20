@@ -11,8 +11,22 @@ class ViLBERT_Encoder(nn.Module):
     - num_heads (int): the number of heads in the multi-head attention
     """
 
-    def __init__(self, embedding_dim: int = 762, num_heads: int = 12) -> None:
+    def __init__(self, embedding_dim: int = 762, num_heads: int = 12, masking_prob: float = 0.15, mask_prob: float = 0.8, random_prob: float = 0.1, unchanged_prob: float = 0.1) -> None:
         super().__init__()
+
+        self.embedding_dim = embedding_dim
+        self.num_heads = num_heads
+
+        # verify the masking probabilities
+        if masking_prob < 0 or masking_prob > 1 or mask_prob < 0 or mask_prob > 1 or random_prob < 0 or random_prob > 1 or unchanged_prob < 0 or unchanged_prob > 1:
+            raise ValueError("Probabilities must be between 0 and 1!")
+        if mask_prob + random_prob + unchanged_prob != 1:
+            raise ValueError("The sum of the probabilities must be equal to 1!")
+
+        self.masking_prob = masking_prob
+        self.mask_prob = mask_prob
+        self.random_prob = random_prob
+        self.unchanged_prob = unchanged_prob
 
         # initialize the multi-head attention
         self.mha = nn.MultiheadAttention(embed_dim=embedding_dim, num_heads=num_heads, batch_first=True)
@@ -32,12 +46,37 @@ class ViLBERT_Encoder(nn.Module):
         Forward pass of the Vision-and-Language BERT Encoder with cross-attention
 
         Args:
-        - q: the query tensor
+        - q: the query tensor, shaped as (seq_len, batch_size, embedding_dim)
         - k_v: the key and value tensor
 
         Returns:
         - torch.Tensor: the output hidden states
         """
+        
+        # verify if model is in training mode to apply ViLBERT maskings
+        if self.training:
+            # apply ViLBERT maskings
+            # 15% of the tokens are masked
+            # 80% of the masked tokens are replaced with [MASK]
+            # 10% of the masked tokens are replaced with random tokens
+            # 10% of the tokens are left unchanged
+
+            # generate the random mask, selecting 15% of the tokens
+            masked_tokens = torch.rand(q.shape) < self.masking_prob
+
+            # generate the mask for the tokens to be masked, selecting 80% of the 15% of the tokens
+            mask_tokens = masked_tokens & (torch.rand(q.shape) < self.mask_prob)
+
+            # generate the mask for the tokens to be replaced with random tokens, selecting 10% of the 15% of the tokens
+            random_tokens = masked_tokens & (torch.rand(q.shape) < self.random_prob)
+
+            # generate the mask for the tokens to be left unchanged, selecting 10% of the tokens
+            unchanged_tokens = ~masked_tokens
+
+            # apply the maskings
+            q[mask_tokens] = 0
+            q[random_tokens] = torch.randint(0, q.shape[-1], random_tokens.sum())
+            q[unchanged_tokens] = q[unchanged_tokens]
 
         q_residual = q # query residual connection
 
