@@ -11,72 +11,78 @@ class Task(Enum):
     GRID = "grid"
     CONES = "cones"
 
-class GridDecoder(nn.Module):
+
+
+class TransformerHead(nn.Module):
 
     """
-    Decodes a voxel grid from the embeddings. 
-    For generalized 3-dimensional environment perception.
+    Transformer-based decoder with a task head for grid prediction or cone detection.
     """
 
-    def __init__(self, embedding_dim: int = 762) -> None:
-        super().__init__()
+    class GridDecoder(nn.Module):
 
-        # TODO: have considerations on the kernel size and stride considering the hidden dimension and desired voxel grid size (e.g. 32x32x32)
-
-        # initialize the deconv3d layers
-        self.deconv1 = nn.ConvTranspose3d(embedding_dim, embedding_dim // 2, kernel_size=3, stride=2, padding=1)
-        self.deconv2 = nn.ConvTranspose3d(embedding_dim // 2, embedding_dim // 4, kernel_size=3, stride=2, padding=1)
-        self.deconv3 = nn.ConvTranspose3d(embedding_dim // 4, 1, kernel_size=3, stride=2, padding=1)
-
-
-    def forward(self, embeddings: torch.Tensor) -> torch.Tensor:
         """
-        Forward pass of the voxel grid decoder.
-
-        Args:
-        - embeddings: the embeddings
-
-        Returns:
-        - torch.Tensor: the voxel grid
+        Decodes a voxel grid from the embeddings. 
+        For generalized 3-dimensional environment perception.
         """
 
-        # apply the deconv3d layers
-        grid = self.deconv1(embeddings)
-        grid = self.deconv2(grid)
-        grid = self.deconv3(grid)
+        def __init__(self, embedding_dim: int = 762) -> None:
+            super().__init__()
 
-        return grid
-    
-class ConesDecoder(nn.Module):
+            # TODO: have considerations on the kernel size and stride considering the hidden dimension and desired voxel grid size (e.g. 32x32x32)
 
-    """
-    Decodes a set of 2-dimensional cone positions and classes from the embeddings.
-    For Formula Student Driverless.
-    """
+            # initialize the deconv3d layers
+            self.deconv1 = nn.ConvTranspose3d(embedding_dim, embedding_dim // 2, kernel_size=3, stride=2, padding=1)
+            self.deconv2 = nn.ConvTranspose3d(embedding_dim // 2, embedding_dim // 4, kernel_size=3, stride=2, padding=1)
+            self.deconv3 = nn.ConvTranspose3d(embedding_dim // 4, 1, kernel_size=3, stride=2, padding=1)
 
-    def __init__(self, embedding_dim: int = 762) -> None:
-        super().__init__()
 
-        # TODO
+        def forward(self, embeddings: torch.Tensor) -> torch.Tensor:
+            """
+            Forward pass of the voxel grid decoder.
 
-        raise NotImplementedError("Cone decoder is not implemented yet.")
+            Args:
+            - embeddings: the embeddings
 
-    def forward(self, embeddings: torch.Tensor) -> torch.Tensor:
+            Returns:
+            - torch.Tensor: the voxel grid
+            """
+
+            # apply the deconv3d layers
+            grid = self.deconv1(embeddings)
+            grid = self.deconv2(grid)
+            grid = self.deconv3(grid)
+
+            return grid
+        
+    class ConesDecoder(nn.Module):
+
         """
-        Forward pass of the cone decoder.
-
-        Args:
-        - embeddings: the embeddings
-
-        Returns:
-        - torch.Tensor: the cone positions and classes
+        Decodes a set of 2-dimensional cone positions and classes from the embeddings.
+        For Formula Student Driverless.
         """
 
-        # TODO
+        def __init__(self, embedding_dim: int = 762) -> None:
+            super().__init__()
 
-        raise NotImplementedError("Cone decoder is not implemented yet.")
+            # TODO
 
-class TransformerDecoder(nn.Module):
+            raise NotImplementedError("Cone decoder is not implemented yet.")
+
+        def forward(self, embeddings: torch.Tensor) -> torch.Tensor:
+            """
+            Forward pass of the cone decoder.
+
+            Args:
+            - embeddings: the embeddings
+
+            Returns:
+            - torch.Tensor: the cone positions and classes
+            """
+
+            # TODO
+
+            raise NotImplementedError("Cone decoder is not implemented yet.")
 
     def __init__(self, embedding_dim: int = 762, num_heads: int = 12, num_layers: int = 12, task: Task = Task.GRID) -> None:
         super().__init__()
@@ -93,9 +99,9 @@ class TransformerDecoder(nn.Module):
         # initialize the task head from the task
         self.task_head = None
         if task == Task.GRID:
-            self.task_head = GridDecoder(embedding_dim)
+            self.task_head = TransformerHead.GridDecoder(embedding_dim)
         elif task == Task.CONES:
-            self.task_head = ConesDecoder(embedding_dim)
+            self.task_head = TransformerHead.ConesDecoder(embedding_dim)
 
     def forward(self, img_embeddings: torch.Tensor, pcl_embeddings: torch.Tensor) -> torch.Tensor:
 
