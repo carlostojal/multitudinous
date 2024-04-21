@@ -1,19 +1,32 @@
 import torch
+from torch import nn
 from multitudinous.model_index import img_backbones, point_cloud_backbones, pretraining, necks, heads
+from multitudinous.tasks import Task
 from multitudinous.model_zoo.multitudinous import Multitudinous
 
 # ensemble the multitudinous model
 def build_multitudinous(img_backbone: str, point_cloud_backbone: str,
-                        img_backbone_weights_path: str = None, point_cloud_backbone_weights_path: str = None) -> Multitudinous:
+                        neck: str, head: str,
+                        img_backbone_weights_path: str = None, point_cloud_backbone_weights_path: str = None,
+                        neck_weights_path: str = None, head_weights_path: str = None,
+                        embedding_dim: int = 762) -> Multitudinous:
     
-    # get the image backbone
-    img_b = build_img_backbone(img_backbone, img_backbone_weights_path)
+    # TODO: add a task parameter to the model builder
+    
+    # create the image backbone
+    img_b = build_img_backbone(img_backbone, embed=True, embedding_dim=embedding_dim, weights_path=img_backbone_weights_path)
 
-    # get the point cloud backbone
+    # create the point cloud backbone
     point_cloud_b = build_point_cloud_backbone(point_cloud_backbone, point_cloud_backbone_weights_path)
 
+    # create the neck
+    neck = build_neck(neck, embedding_dim, neck_weights_path)
+
+    # create the head
+    head = build_head(head, embedding_dim, head_weights_path)
+
     # create the model
-    model = Multitudinous(img_b, point_cloud_b)
+    model = Multitudinous(img_b, point_cloud_b, neck, head)
 
     return model
 
@@ -45,7 +58,25 @@ def build_img_pretraining(img_pretraining: str, in_channels: int, weights_path: 
 def build_point_cloud_backbone(point_cloud_backbone: str, weights_path: str = None) -> torch.nn.Module:
     if point_cloud_backbone not in point_cloud_backbones:
         raise ValueError(f'Point cloud backbone {point_cloud_backbone} not found. Available point cloud backbones are {list(point_cloud_backbones.keys())}.')
-    point_cloud_b = point_cloud_backbones[point_cloud_backbone]
+    point_cloud_b = point_cloud_backbones[point_cloud_backbone](point_dim=3)
     if weights_path is not None:
         point_cloud_b.load_state_dict(torch.load(weights_path))
     return point_cloud_b
+
+# build the neck
+def build_neck(neck: str, embedding_dim: int, weights_path: str = None) -> torch.nn.Module:
+    if neck not in necks:
+        raise ValueError(f'Neck {neck} not found. Available necks are {list(necks.keys())}.')
+    neck = necks[neck](embedding_dim=embedding_dim)
+    if weights_path is not None:
+        neck.load_state_dict(torch.load(weights_path))
+    return neck
+
+# build the head
+def build_head(head: str, embedding_dim: int = 762, task: Task = Task.GRID, weights_path: str = None) -> torch.nn.Module:
+    if head not in heads:
+        raise ValueError(f'Head {head} not found. Available heads are {list(heads.keys())}.')
+    head = heads[head](embedding_dim=embedding_dim, task=task)
+    if weights_path is not None:
+        head.load_state_dict(torch.load(weights_path))
+    return head
