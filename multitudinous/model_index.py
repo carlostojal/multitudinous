@@ -1,9 +1,10 @@
 import sys
 sys.path.append(".")
-from multitudinous.heads.deconv import DeconvHead
-from multitudinous.necks.concat import ConcatNeck
 from multitudinous.backbones.image.resnet import ResNet50, SEResNet50, CBAMResNet50
 from multitudinous.backbones.image.autoencoders import ResNet50AE, SEResNet50AE, CBAMResNet50AE, ResNet50UNet, SEResNet50UNet, CBAMResNet50UNet
+from multitudinous.backbones.point_cloud.pointnet import PointNet
+from multitudinous.necks.vilbert import ViLBERT, ViLBERT_Encoder
+from multitudinous.heads.transformer import TransformerHead, Task
 
 # image backbone models
 img_backbones = {
@@ -24,16 +25,15 @@ pretraining = {
 
 # point cloud backbone models
 point_cloud_backbones = {
-    'point_transformer': None,
-    'pointnet': None
+    'pointnet': PointNet
 }
 
 # neck models
 necks = {
-    'concat': ConcatNeck,
+    'vilbert': ViLBERT,
 }
 
 # head models
 heads = {
-    'deconvolutional': DeconvHead
+    'transformer': TransformerHead
 }
