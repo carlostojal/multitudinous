@@ -1,17 +1,6 @@
 import torch
 from torch import nn
-from enum import Enum
-
-class Task(Enum):
-    """
-    The task of the decoder:
-    - GRID: voxel grid prediction
-    - CONES: cone prediction
-    """
-    GRID = "grid"
-    CONES = "cones"
-
-
+from multitudinous.tasks import Task
 
 class TransformerHead(nn.Module):
 
