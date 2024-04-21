@@ -18,12 +18,18 @@ def build_multitudinous(img_backbone: str, point_cloud_backbone: str,
     return model
 
 # build the image backbone
-def build_img_backbone(img_backbone: str, in_channels: int, weights_path: str = None) -> torch.nn.Module:
+def build_img_backbone(img_backbone: str, in_channels: int = 4, embed: bool = False, embedding_dim: int = 762, weights_path: str = None) -> torch.nn.Module:
     if img_backbone not in img_backbones:
         raise ValueError(f'Image backbone {img_backbone} not found. Available image backbones are {list(img_backbones.keys())}.')
     img_b = img_backbones[img_backbone](in_channels=in_channels)
     if weights_path is not None:
         img_b.load_state_dict(torch.load(weights_path))
+    
+    # add the ViT embedding, if "embed" is True
+    if embed:
+        embedder = img_backbones['vit'](embedding_dim=embedding_dim)
+        img_b = nn.Sequential(img_b, embedder)
+
     return img_b
 
 # build the image pre-training model

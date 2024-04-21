@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     # build the image backbone
     print("Building the image backbone...", end=" ")
-    img_backbone: torch.nn.Module = build_img_backbone(args.config, 4, args.weights)
+    img_backbone: torch.nn.Module = build_img_backbone(img_backbone=args.config, in_channels=4, weights_path=args.weights)
     print(img_backbone)
     print("done.")
 
