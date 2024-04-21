@@ -181,7 +181,7 @@ class PointNetSegmentation():
 
 class PointNetEmbedding():
 
-    def __init__(self, point_dim: int = 3, sequence_len: int = 1024, embedding_dim: int = 768) -> None:
+    def __init__(self, point_dim: int = 3, sequence_len: int = 1024, embedding_dim: int = 762) -> None:
         super().__init__()
 
         self.sequence_len = sequence_len
