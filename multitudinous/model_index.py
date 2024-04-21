@@ -1,6 +1,7 @@
 import sys
 sys.path.append(".")
 from multitudinous.backbones.image.resnet import ResNet50, SEResNet50, CBAMResNet50
+from multitudinous.backbones.image.vit_embedding import ViT_Embedding
 from multitudinous.backbones.image.autoencoders import ResNet50AE, SEResNet50AE, CBAMResNet50AE, ResNet50UNet, SEResNet50UNet, CBAMResNet50UNet
 from multitudinous.backbones.point_cloud.pointnet import PointNet
 from multitudinous.necks.vilbert import ViLBERT, ViLBERT_Encoder
@@ -10,7 +11,8 @@ from multitudinous.heads.transformer import TransformerHead, Task
 img_backbones = {
     'resnet50': ResNet50,
     'se_resnet50': SEResNet50,
-    'cbam_resnet50': CBAMResNet50
+    'cbam_resnet50': CBAMResNet50,
+    'vit_embedding': ViT_Embedding
 }
 
 # pre-training specific models
