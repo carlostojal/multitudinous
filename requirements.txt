@@ -1,1 +1,6 @@
 torch
+torchvision
+open3d
+matplotlib
+numpy
+opencv-python
