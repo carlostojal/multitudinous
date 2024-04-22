@@ -4,7 +4,7 @@ sys.path.append(".")
 from multitudinous.utils.model_builder import build_point_cloud_pretraining
 from multitudinous.utils.dataset_builder import build_dataset
 from multitudinous.utils.loss_builder import build_loss_fn
-from multitudinous.configs.pretraining.PreTrainingConfig import PreTrainingConfig
+from multitudinous.configs.pretraining.PclPreTrainingConfig import PclPreTrainingConfig
 from multitudinous.configs.datasets.DatasetConfig import DatasetConfig
 import torch
 from torch.utils.data import DataLoader
@@ -25,13 +25,14 @@ if __name__ == "__main__":
 
     # build the image pretrainer
     print("Building the point cloud pretrainer...", end=" ")
-    config: PreTrainingConfig = PreTrainingConfig()
+    config: PclPreTrainingConfig = PclPreTrainingConfig()
     config.parse_from_file(args.config)
     pcl_pretrainer: torch.nn.Module = build_point_cloud_pretraining(config.name, point_dim=config.encoder.point_dim, num_classes=config.num_classes, weights_path=args.weights)
     print(pcl_pretrainer)
     print("done.")
 
     # initialize wandb
+    """
     print("Initializing loggers...", end=" ")
     wandb.init(
         project='point_cloud_pretrainer',

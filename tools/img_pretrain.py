@@ -4,7 +4,7 @@ sys.path.append(".")
 from multitudinous.utils.model_builder import build_img_pretraining
 from multitudinous.utils.dataset_builder import build_dataset
 from multitudinous.utils.loss_builder import build_loss_fn
-from multitudinous.configs.pretraining.PreTrainingConfig import PreTrainingConfig
+from multitudinous.configs.pretraining.ImgPreTrainingConfig import ImgPreTrainingConfig
 from multitudinous.configs.datasets.DatasetConfig import DatasetConfig
 from multitudinous.loss_fns import rmse, rel, delta
 import torch
@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
     # build the image pretrainer
     print("Building the image pretrainer...", end=" ")
-    config: PreTrainingConfig = PreTrainingConfig()
+    config: ImgPreTrainingConfig = ImgPreTrainingConfig()
     config.parse_from_file(args.config)
     img_pretrainer: torch.nn.Module = build_img_pretraining(config.name, 4, args.weights)
     print(img_pretrainer)
