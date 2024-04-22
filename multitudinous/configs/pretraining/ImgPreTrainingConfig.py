@@ -8,6 +8,7 @@ class EncoderConfig(Config):
         self.img_width = None
         self.img_height = None
         self.point_dim = None
+        self.num_points = None
         self.with_dropout = None
 
     def parse_from_file(self, filename: str):
@@ -21,7 +22,7 @@ class DecoderConfig:
     def parse_from_file(self, filename: str):
         pass
 
-class PreTrainingConfig:
+class ImgPreTrainingConfig:
 
     def __init__(self) -> None:
         self.name = None
@@ -34,10 +35,7 @@ class PreTrainingConfig:
         self.learning_rate = None
         self.momentum = None
         self.loss_fn = None
-        self.num_classes = None
         self.encoder = None
-        self.img_backbone = None
-        self.point_cloud_backbone = None
 
     def parse_from_file(self, filename: str):
             
@@ -63,7 +61,6 @@ class PreTrainingConfig:
             self.encoder.in_channels = conf['encoder']['in_channels']
             self.encoder.img_width = conf['encoder']['img_width']
             self.encoder.img_height = conf['encoder']['img_height']
-            self.encoder.point_dim = conf['encoder']['point_dim']
             self.encoder.with_dropout = conf['encoder']['with_dropout']
         
             self.decoder = DecoderConfig()
