@@ -150,7 +150,7 @@ class PointNetSegmentation():
     def __init__(self, point_dim: int = 3, num_classes: int = 16) -> None:
         super().__init__()
 
-        self.out_dim = out_dim
+        self.num_classes = num_classes
 
         self.feature_extractor = PointNet(point_dim)
 
