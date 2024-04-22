@@ -2,7 +2,7 @@ import torch
 from multitudinous.dataset_index import datasets
 import os
 
-def build_img_dataset(dataset: str, base_path: str, train_path: str, val_path: str, test_path: str) -> torch.utils.data.Dataset:
+def build_dataset(dataset: str, base_path: str, train_path: str, val_path: str, test_path: str) -> torch.utils.data.Dataset:
 
     # verify that the dataset is configured
     if dataset not in datasets:
