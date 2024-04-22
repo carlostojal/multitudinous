@@ -115,7 +115,7 @@ class PointNet(nn.Module):
         # return a tensor with shape (batch_size, 1024, num_points) and the feature transform
         return x, x_t2
 
-class PointNetClassification():
+class PointNetClassification(nn.Module):
 
     def __init__(self, point_dim: int = 3, num_classes: int = 512) -> None:
         super().__init__()
@@ -145,7 +145,7 @@ class PointNetClassification():
 
         return x
     
-class PointNetSegmentation():
+class PointNetSegmentation(nn.Module):
 
     def __init__(self, point_dim: int = 3, num_classes: int = 16) -> None:
         super().__init__()
@@ -182,7 +182,7 @@ class PointNetSegmentation():
         return x
 
 
-class PointNetEmbedding():
+class PointNetEmbedding(nn.Module):
 
     def __init__(self, point_dim: int = 3, sequence_len: int = 1024, embedding_dim: int = 762) -> None:
         super().__init__()
