@@ -12,3 +12,4 @@ num_classes: 16
 encoder:
   name: pointnet
   point_dim: 3
+  num_points: 1024
