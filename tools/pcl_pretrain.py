@@ -41,6 +41,7 @@ if __name__ == "__main__":
     )
     writer = SummaryWriter(f"runs/pcl_pretrainer/{config.name}_{datetime.datetime.now().strftime('%H:%M:%S_%Y-%m-%d')}")
     print("done.")
+    """
 
     # load the dataset
     print("Loading dataset...", end=" ")
@@ -81,6 +82,21 @@ if __name__ == "__main__":
     val_len = len(val_loader)
     test_len = len(test_loader)
 
+
+    # ------------------- DEBUG -------------------
+
+    rand_pcl = torch.rand((config.batch_size, config.encoder.num_points, config.encoder.point_dim))
+    rand_pcl = rand_pcl.to(device)
+
+    print("Random PCL shape: ", rand_pcl.shape)
+
+    pred_seg = pcl_pretrainer(rand_pcl)
+    print(pred_seg)
+    print(pred_seg.shape)
+
+    # ------------------- DEBUG -------------------
+
+    """
     # train the model
     for epoch in range(config.epochs):
 
@@ -217,6 +233,7 @@ if __name__ == "__main__":
     wandb.finish()
     writer.flush()
     writer.close()
+    """
 
     print("done.")
 
