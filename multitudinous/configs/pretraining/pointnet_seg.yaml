@@ -1,5 +1,5 @@
 name: 'pointnet_seg'
-batch_size: 1
+batch_size: 4
 optimizer: 'adam'
 epochs: 15
 train_percent: 0.7
@@ -12,4 +12,4 @@ num_classes: 16
 encoder:
   name: pointnet
   point_dim: 3
-  num_points: 1024
+  num_points: 2048
