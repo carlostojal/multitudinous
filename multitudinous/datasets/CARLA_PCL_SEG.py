@@ -3,7 +3,7 @@ import os
 import torch
 import numpy as np
 
-class CARLA_PCL_SEGM(Dataset):
+class CARLA_PCL_SEG(Dataset):
     def __init__(self, root: str, batch_size:int = 1, n_classes:int = 28):
         self.root = root
         self.pcl = []
@@ -89,7 +89,7 @@ class CARLA_PCL_SEGM(Dataset):
     
 
 if __name__ == "__main__":    
-    dataset = CARLA_PCL_SEGM("../../../Carla/PythonAPI/projeto_informatico/_out", batch_size=2, n_classes=28)
+    dataset = CARLA_PCL_SEG("../../../Carla/PythonAPI/projeto_informatico/_out", batch_size=2, n_classes=28)
     
     # ---> VAI BUSCAR SÓ A PRIMEIRA PCL E DEVOLVE OS TENSORES COM BATCH_SIZE = 1
     pcl, ground_truth = dataset[0]
