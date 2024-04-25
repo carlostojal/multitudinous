@@ -3,7 +3,7 @@ sys.path.append(".")
 from multitudinous.backbones.image.resnet import ResNet50, SEResNet50, CBAMResNet50
 from multitudinous.backbones.image.vit_embedding import ViT_Embedding
 from multitudinous.backbones.image.autoencoders import ResNet50AE, SEResNet50AE, CBAMResNet50AE, ResNet50UNet, SEResNet50UNet, CBAMResNet50UNet
-from multitudinous.backbones.point_cloud.pointnet import PointNet, PointNetSegmentation
+from multitudinous.backbones.point_cloud.pointnet import PointNet, PointNetEmbedding, PointNetSegmentation
 from multitudinous.necks.vilbert import ViLBERT, ViLBERT_Encoder
 from multitudinous.heads.transformer import TransformerHead, Task
 
@@ -32,7 +32,7 @@ point_cloud_pretraining = {
 
 # point cloud backbone models
 point_cloud_backbones = {
-    'pointnet': PointNet
+    'pointnet': PointNetEmbedding
 }
 
 # neck models
