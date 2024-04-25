@@ -200,19 +200,25 @@ class PointNetEmbedding(nn.Module):
 
         self.conv1 = nn.Conv1d(1024, 512, 1)
         self.conv2 = nn.Conv1d(512, 256, 1)
-        self.conv3 = nn.Conv1d(256, embedding_dim * sequence_len, 1)
+        self.conv3 = nn.Conv1d(256, 128, 1)
+        self.conv4 = nn.Conv1d(256, embedding_dim * sequence_len, 1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # extract features
-        x, _ = self.feature_extractor(x)
+        x, x_t2 = self.feature_extractor(x)
 
         # max pooling
         x = torch.max(x, 2, keepdim=True)[0]
 
+        # concatenate feature transform
+        x = x.expand(-1, -1, x_t2.shape[2])
+        x = torch.cat((x_t2, x), dim=1)
+
         # FC layers
         x = torch.relu(self.conv1(x))
         x = torch.relu(self.conv2(x))
-        x = self.conv3(x)
+        x = torch.relu(self.conv3(x))
+        x = self.conv4(x)
 
         # reshape to (batch_size, sequence_len, embedding_dim)
         x = x.view(-1, self.sequence_len, self.embedding_dim)
