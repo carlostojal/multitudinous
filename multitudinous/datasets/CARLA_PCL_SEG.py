@@ -2,21 +2,22 @@ from torch.utils.data import Dataset
 import os
 import torch
 import numpy as np
+from random import randint
 
 class CARLA_PCL_SEG(Dataset):
-    def __init__(self, root: str, batch_size:int = 1, n_classes:int = 28):
-        self.root = root
-        self.pcl = []
-        self.batch_size = batch_size
-        self.n_classes = n_classes
+    def __init__(self, root: str, min_points_threshold: int = 131000, n_classes:int = 28):
+
+        self.root = root # dataaset root directory
+        self.pcl = [] # file paths list
+        self.min_points_threshold = min_points_threshold # randomly remove extra points on each sample
+        self.n_classes = n_classes # number of segmentation classes
         
-        fullpath = os.path.join(root, "lidarSegm")
-        pcl_files = os.listdir(fullpath)
+        pcl_files = os.listdir(root)
         pcl_files.sort()
         
         for file in pcl_files:
             # append the filename to the list
-            self.pcl.append(os.path.join(fullpath, file))
+            self.pcl.append(os.path.join(root, file))
             
             
     def __len__(self):
@@ -62,7 +63,7 @@ class CARLA_PCL_SEG(Dataset):
             x = float(data[0])
             y = float(data[1])
             z = float(data[2])
-            class_tag = int(data[-1])
+            class_tag = int(data[-1]) # the class tag is the last element
 
             matrix_class[class_tag-1] = 1               # Put 1 in the class tag position in the matrix
             
@@ -87,7 +88,8 @@ class CARLA_PCL_SEG(Dataset):
             
         return pcl_batch, ground_truth_batch
     
-
+# ------------------------------------------------------
+# TODO: REMOVE AFTER TESTING
 if __name__ == "__main__":    
     dataset = CARLA_PCL_SEG("../../../Carla/PythonAPI/projeto_informatico/_out", batch_size=2, n_classes=28)
     
