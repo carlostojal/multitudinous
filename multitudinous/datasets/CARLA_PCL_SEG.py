@@ -72,6 +72,19 @@ class CARLA_PCL_SEG(Dataset):
 
             self.n_points += 1                          # Count the number of points in the point cloud
 
+        # verify if the point cloud dimension is smaller than the threshold
+        if len(points) < self.min_points_threshold:
+            raise RuntimeError(f"Expected at least {} points!".format(self.min_points_threshold))
+        
+        # remove random points until the threshold is reached
+        max_index = len(points) - 1
+        n_points_to_remove = len(points) - self.min_points_threshold
+        for _ in range(n_points_to_remove):
+            index_to_remove = randint(0, max_index)
+            del self.points[index_to_remove]
+            del self.matrix_classes[index_to_remove]
+            
+
         return torch.Tensor(np.asarray(points)).unsqueeze(0), torch.Tensor(np.asarray(matrix_classes)).unsqueeze(0)
     
     
