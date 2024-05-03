@@ -80,11 +80,12 @@ class CARLA_PCL_SEG(Dataset):
         max_index = len(points) - 1
         n_points_to_remove = len(points) - self.min_points_threshold
         for _ in range(n_points_to_remove):
-            index_to_remove = randint(0, max_index)
-            del self.points[index_to_remove]
-            del self.matrix_classes[index_to_remove]
+            index_to_remove = randint(0, max_index) # sample a random integer in the range of the point count
+            del self.points[index_to_remove] # remove the point
+            del self.matrix_classes[index_to_remove] # remove the ground truth classes
+            max_index -= 1 # given a point has been removed, the maximum index has decreased
             
-
+        # finally, convert the arrays to tensors
         return torch.Tensor(np.asarray(points)).unsqueeze(0), torch.Tensor(np.asarray(matrix_classes)).unsqueeze(0)
     
     
