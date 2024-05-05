@@ -74,7 +74,7 @@ class CARLA_PCL_SEG(Dataset):
 
         # verify if the point cloud dimension is smaller than the threshold
         if len(points) < self.min_points_threshold:
-            raise RuntimeError(f"Expected at least {} points!".format(self.min_points_threshold))
+            raise RuntimeError(f"Expected at least {self.min_points_threshold} points! Got {len(points)}.")
         
         # remove random points until the threshold is reached
         max_index = len(points) - 1
