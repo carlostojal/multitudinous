@@ -166,13 +166,17 @@ class PointNetSegmentation(nn.Module):
 
         # extract features
         x, x_t2 = self.feature_extractor(x)
+        x_t2 = x_t2.transpose(2, 1) # (batch_size, num_points, 1024) shape
 
         # max pooling
-        x = torch.max(x, 2, keepdim=True)[0] # (batch_size, 1024) shape
+        x = torch.max(x, 2, keepdim=True)[0] # (batch_size, 1024, 1) shape
+        x = x.transpose(2, 1) # (batch_size, 1, 1024) shape
 
         # concatenate feature transform
-        x = x.expand(-1, -1, x_t2.shape[2]) # expand to (batch_size, 1024, num_points)
-        x = torch.cat((x_t2, x), dim=1) # concat to (batch_size, 1088, num_points)
+        x = x.expand(-1, x_t2.shape[1], -1) # expand to (batch_size, num_points, 1024)
+        
+        x = torch.cat((x_t2, x), dim=2) # concat to (batch_size, num_points, 1088)
+        x = x.transpose(2, 1) # (batch_size, 1088, num_points)
 
         # FC layers
         x = torch.relu(self.conv1(x))
