@@ -30,12 +30,15 @@ class CARLA_PCL_SEG(Dataset):
         pcl_files.sort()
         
         for file in pcl_files:
-            # append the filename to the list
-            self.pcl.append(os.path.join(self.root, file))
+            sample, gt = self.get_data_pcl(os.path.join(self.root, file))
+            if sample is not None and sample.shape[0] >= self.min_points_threshold:
+                self.pcl.append((sample, gt))
+                del sample
+                del gt
             
             
     def __len__(self):
-        return len(self.pcl) 
+        return len(self.pcl)
     
     
     def __getitem__(self, idx):
