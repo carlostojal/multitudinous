@@ -30,11 +30,16 @@ class CARLA_PCL_SEG(Dataset):
         pcl_files.sort()
         
         for file in pcl_files:
-            sample, gt = self.get_data_pcl(os.path.join(self.root, file))
-            if sample is not None and sample.shape[0] >= self.min_points_threshold:
-                self.pcl.append((sample, gt))
+            sample = None
+            gt = None
+            try:
+                sample, gt = self.get_data_pcl(os.path.join(self.root, file))
                 del sample
                 del gt
+            except RuntimeError as e:
+                print(e)
+                continue # skip invalid point clouds
+            self.pcl.append(os.path.join(self.root, file))
             
             
     def __len__(self):
