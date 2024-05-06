@@ -2,25 +2,35 @@ from torch.utils.data import Dataset
 import os
 import torch
 import numpy as np
-from random import randint
+from ..configs.datasets.DatasetConfig import DatasetConfig, SubSet
 from ..utils.pointclouds import farthest_point_sampling
 
 class CARLA_PCL_SEG(Dataset):
-    def __init__(self, root: str, min_points_threshold: int = 131000, n_classes:int = 28):
+    def __init__(self, config: DatasetConfig, subset: SubSet):
 
-        self.root = root # dataaset root directory
+        subdir: str = None
+        if subset == SubSet.TRAIN:
+            subdir = config.train_path
+        elif subset == SubSet.VAL:
+            subdir = config.val_path
+        elif subset == SubSet.TEST:
+            subdir = config.test_path
+        else:
+            raise ValueError(f"Invalid subset {subset}")
+        
+        self.root = os.path.join(config.base_path, subdir) # dataset root directory
         self.pcl = [] # file paths list
-        self.min_points_threshold = min_points_threshold # randomly remove extra points on each sample
-        self.n_classes = n_classes # number of segmentation classes
+        self.min_points_threshold = config.min_points_threshold # randomly remove extra points on each sample
+        self.n_classes = config.n_pcl_classes # number of segmentation classes
 
         self.sampled_points = set() # list of sampled points. used to avoid sampling the same point twice when resampling invalid point clouds
         
-        pcl_files = os.listdir(root)
+        pcl_files = os.listdir(self.root)
         pcl_files.sort()
         
         for file in pcl_files:
             # append the filename to the list
-            self.pcl.append(os.path.join(root, file))
+            self.pcl.append(os.path.join(self.root, file))
             
             
     def __len__(self):
@@ -38,6 +48,8 @@ class CARLA_PCL_SEG(Dataset):
             
             while idx in self.sampled_points:
                 idx += 1 # sample the next point cloud
+
+            self.sampled_points.add(idx) # add the point cloud to the list of sampled points
 
             pcl_filename = self.pcl[idx]
 
@@ -58,7 +70,6 @@ class CARLA_PCL_SEG(Dataset):
                 continue
 
             resample = False
-            self.sampled_points.add(idx)
             print(f"N_points: {self.n_points}")
 
         return pcl_tensor, ground_truth_tensor
