@@ -23,8 +23,6 @@ class CARLA_PCL_SEG(Dataset):
         self.pcl = [] # file paths list
         self.min_points_threshold = config.min_points_threshold # randomly remove extra points on each sample
         self.n_classes = config.n_pcl_classes # number of segmentation classes
-
-        self.sampled_points = set() # list of sampled points. used to avoid sampling the same point twice when resampling invalid point clouds
         
         pcl_files = os.listdir(self.root)
         pcl_files.sort()
@@ -48,38 +46,17 @@ class CARLA_PCL_SEG(Dataset):
     
     def __getitem__(self, idx):
 
-        resample: bool = True
+        pcl_filename = self.pcl[idx]
+
+        # Verify that the file exists
+        try:
+            f = open(pcl_filename, 'rb')
+            f.close()
+        except FileNotFoundError:
+            return
         
-        while resample:
-
-            while idx in self.sampled_points:
-                idx += 1 # sample the next point cloud
-            
-            # Check bounds
-            if idx >= len(self.pcl) or idx < 0:
-                return
-
-            self.sampled_points.add(idx) # add the point cloud to the list of sampled points
-
-            pcl_filename = self.pcl[idx]
-
-            # Verify that the file exists
-            try:
-                open(pcl_filename, 'rb')
-            except FileNotFoundError:
-                return
-            
-            # Get the number of points, their coordinates, and the class tag of each
-            pcl_tensor = None
-            ground_truth_tensor = None
-            try:
-                pcl_tensor, ground_truth_tensor = self.get_data_pcl(pcl_filename)
-            except RuntimeError as e: # an invalid point cloud was found
-                print(e)
-                resample = True
-                continue
-
-            resample = False
+        # Get the number of points, their coordinates, and the class tag of each
+        pcl_tensor, ground_truth_tensor = self.get_data_pcl(pcl_filename)
 
         return pcl_tensor, ground_truth_tensor
     
