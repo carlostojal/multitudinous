@@ -2,7 +2,7 @@
 
 import numpy as np
 
-def farthest_point_sampling(pointcloud: np.array[np.array], n_points: int = 1024):
+def farthest_point_sampling(pointcloud: np.array, n_points: int = 1024):
 
     """
     Farthest point sampling algorithm to downsample a point cloud
