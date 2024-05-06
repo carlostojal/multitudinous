@@ -134,7 +134,7 @@ if __name__ == "__main__":
             # adjust the weights
             optim.step()
 
-            print(f"\rEpoch {epoch+1}/{config.epochs}, Sample {curr_sample}/{train_len}, Train Loss: {train_loss.item()}", end=" ")
+            print(f"\rEpoch {epoch+1}/{config.epochs}, Sample {curr_sample}/{train_len*config.batch_size}, Train Loss: {train_loss.item()}", end=" ")
 
         print()
 
@@ -174,7 +174,7 @@ if __name__ == "__main__":
 
             del pcl, seg, pred_seg
 
-            print(f"\rEpoch {epoch+1}/{config.epochs}, Sample {curr_sample}/{val_len}, Val Loss: {val_loss.item()}", end=" ")
+            print(f"\rEpoch {epoch+1}/{config.epochs}, Sample {curr_sample}/{val_len*config.batch_size}, Val Loss: {val_loss.item()}", end=" ")
 
         print()
 
@@ -221,7 +221,7 @@ if __name__ == "__main__":
 
         test_loss = test_loss_total / pred_seg.shape[0]
 
-        print(f"\rTesting sample {curr_sample}/{test_len}, Test Loss: {test_loss.item()}", end=" ")
+        print(f"\rTesting sample {curr_sample}/{test_len*config.batch_size}, Test Loss: {test_loss.item()}", end=" ")
 
     print()
 
