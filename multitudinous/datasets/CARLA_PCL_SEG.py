@@ -3,6 +3,7 @@ import os
 import torch
 import numpy as np
 from random import randint
+from ..utils.pointclouds import farthest_point_sampling
 
 class CARLA_PCL_SEG(Dataset):
     def __init__(self, root: str, min_points_threshold: int = 131000, n_classes:int = 28):
@@ -76,6 +77,7 @@ class CARLA_PCL_SEG(Dataset):
         if len(points) < self.min_points_threshold:
             raise RuntimeError(f"Expected at least {self.min_points_threshold} points! Got {len(points)}.")
         
+        """
         # remove random points until the threshold is reached
         max_index = len(points) - 1
         n_points_to_remove = len(points) - self.min_points_threshold
@@ -84,9 +86,13 @@ class CARLA_PCL_SEG(Dataset):
             del self.points[index_to_remove] # remove the point
             del self.matrix_classes[index_to_remove] # remove the ground truth classes
             max_index -= 1 # given a point has been removed, the maximum index has decreased
+        """
+
+        # sample the points using the farthest point sampling algorithm
+        points = farthest_point_sampling(np.asarray(points), n_points=self.min_points_threshold)
             
         # finally, convert the arrays to tensors
-        return torch.Tensor(np.asarray(points)).unsqueeze(0), torch.Tensor(np.asarray(matrix_classes)).unsqueeze(0)
+        return torch.Tensor(points).unsqueeze(0), torch.Tensor(np.asarray(matrix_classes)).unsqueeze(0)
     
     
     def get_dataset(self):
