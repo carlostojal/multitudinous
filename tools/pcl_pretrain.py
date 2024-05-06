@@ -110,7 +110,7 @@ if __name__ == "__main__":
             # zero the gradients for each batch
             optim.zero_grad()
 
-            # build the rgb-d image
+            # copy the pointcloud and segmentation to device
             pcl = pcl.to(device)
             seg = seg.to(device)
 
@@ -154,6 +154,10 @@ if __name__ == "__main__":
 
         curr_sample = 0
         for pcl, seg in val_loader:
+
+            # copy the pointcloud and segmentation to device
+            pcl = pcl.to(device)
+            seg = seg.to(device)
 
             # forward pass
             pred_seg = pcl_pretrainer(pcl)
@@ -199,6 +203,10 @@ if __name__ == "__main__":
     # test the model
     print("Testing the model...", end=" ")
     for pcl, seg in test_loader:
+
+        # copy the pointcloud and segmentation to device
+        pcl = pcl.to(device)
+        seg = seg.to(device)
 
         # forward pass
         pred_seg = pcl_pretrainer(pcl)
