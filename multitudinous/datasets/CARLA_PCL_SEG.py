@@ -43,12 +43,13 @@ class CARLA_PCL_SEG(Dataset):
         resample: bool = True
         
         while resample:
+
+            while idx in self.sampled_points:
+                idx += 1 # sample the next point cloud
+            
             # Check bounds
             if idx >= len(self.pcl) or idx < 0:
                 return
-            
-            while idx in self.sampled_points:
-                idx += 1 # sample the next point cloud
 
             self.sampled_points.add(idx) # add the point cloud to the list of sampled points
 
