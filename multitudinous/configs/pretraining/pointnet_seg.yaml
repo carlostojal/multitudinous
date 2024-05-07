@@ -1,0 +1,15 @@
+name: 'pointnet_seg'
+batch_size: 2
+optimizer: 'adam'
+epochs: 15
+train_percent: 0.7
+val_percent: 0.2
+test_percent: 0.1
+learning_rate: 0.001
+momentum: 0.9
+loss_fn: 'cross_entropy'
+num_classes: 28
+encoder:
+  name: pointnet
+  point_dim: 3
+  num_points: 2048

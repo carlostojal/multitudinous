@@ -1,5 +1,0 @@
-name: carla
-base_path: ../data/carla
-train_path: train
-val_path: validation
-test_path: test

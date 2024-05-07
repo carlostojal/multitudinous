@@ -1,6 +1,5 @@
 import torch
 from torch import nn
-from torch.autograd import Variable
 
 class TNet(nn.Module):
     """
@@ -33,7 +32,7 @@ class TNet(nn.Module):
         Forward pass of the Transformation Network
 
         Args:
-        - x (torch.Tensor): the input point cloud
+        - x (torch.Tensor): the input point cloud, shaped (batch_size, point_dim, num_points)
 
         Returns:
         - torch.Tensor: the output of the Transformation Network
@@ -42,11 +41,11 @@ class TNet(nn.Module):
         # MLP
         x = self.relu(self.bn1(self.conv1(x)))
         x = self.relu(self.bn2(self.conv2(x)))
-        x = self.relu(self.bn3(self.conv3(x)))
+        x = self.relu(self.bn3(self.conv3(x))) # (batch_size, n_points, 1024) shape
 
         # max pooling
         x = torch.max(x, 2, keepdim=True)[0]
-        x = x.view(-1, 1024)
+        x = x.view(-1, 1024) # (batch_size, 1024) shape
 
         # FC layers
         x = self.relu(self.bn4(self.fc1(x)))
@@ -54,7 +53,7 @@ class TNet(nn.Module):
         x = self.fc3(x)
 
         # add identity matrix
-        x += torch.eye(self.in_dim).view(1, self.in_dim**2).repeat(x.size(0), 1)
+        x += torch.eye(self.in_dim).view(1, self.in_dim**2).repeat(x.size(0), 1).to(x.device)
         x = x.view(-1, self.in_dim, self.in_dim)
 
         return x
@@ -87,7 +86,7 @@ class PointNet(nn.Module):
         Forward pass of the PointNet
 
         Args:
-        - x (torch.Tensor): the input point
+        - x (torch.Tensor): the input point cloud (shape: [batch_size, num_points, point_dim])
 
         Returns:
         - torch.Tensor: the output of the PointNet
@@ -97,14 +96,18 @@ class PointNet(nn.Module):
 
         # input transform
         t = self.t1(x)
-        x *= t
+        x = x.transpose(2, 1)
+        x = torch.bmm(x, t)
+        x = x.transpose(2, 1)
 
         # MLP
         x = self.bn1(self.conv1(x))
 
         # feature transform
         t = self.t2(x)
-        x *= t
+        x = x.transpose(2, 1)
+        x = torch.bmm(x, t)
+        x = x.transpose(2, 1)
 
         x_t2 = x
 
@@ -115,7 +118,7 @@ class PointNet(nn.Module):
         # return a tensor with shape (batch_size, 1024, num_points) and the feature transform
         return x, x_t2
 
-class PointNetClassification():
+class PointNetClassification(nn.Module):
 
     def __init__(self, point_dim: int = 3, num_classes: int = 512) -> None:
         super().__init__()
@@ -145,7 +148,7 @@ class PointNetClassification():
 
         return x
     
-class PointNetSegmentation():
+class PointNetSegmentation(nn.Module):
 
     def __init__(self, point_dim: int = 3, num_classes: int = 16) -> None:
         super().__init__()
@@ -165,10 +168,14 @@ class PointNetSegmentation():
         x, x_t2 = self.feature_extractor(x)
 
         # max pooling
-        x = torch.max(x, 2, keepdim=True)[0]
+        x, _ = torch.max(x, 2, keepdim=True) # (batch_size, 1024, 1) shape
+        del _
 
+        # repeat the max-pooled features
+        x = x.expand(-1, -1, x_t2.shape[2]) # expand to (batch_size, 1024, num_points)
+        
         # concatenate feature transform
-        x = torch.cat((x, x_t2), dim=1)
+        x = torch.cat((x_t2, x), dim=1) # concat to (batch_size, 1088, num_points)
 
         # FC layers
         x = torch.relu(self.conv1(x))
@@ -177,12 +184,14 @@ class PointNetSegmentation():
         x = self.conv4(x)
 
         # softmax
-        x = torch.softmax(x, dim=1)
+        x = torch.softmax(x, dim=1) # x has shape (batch_size, num_classes, num_points)
+
+        x = x.transpose(2, 1) # (batch_size, num_points, num_classes)
 
         return x
 
 
-class PointNetEmbedding():
+class PointNetEmbedding(nn.Module):
 
     def __init__(self, point_dim: int = 3, sequence_len: int = 1024, embedding_dim: int = 762) -> None:
         super().__init__()
@@ -194,19 +203,25 @@ class PointNetEmbedding():
 
         self.conv1 = nn.Conv1d(1024, 512, 1)
         self.conv2 = nn.Conv1d(512, 256, 1)
-        self.conv3 = nn.Conv1d(256, embedding_dim * sequence_len, 1)
+        self.conv3 = nn.Conv1d(256, 128, 1)
+        self.conv4 = nn.Conv1d(256, embedding_dim * sequence_len, 1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # extract features
-        x, _ = self.feature_extractor(x)
+        x, x_t2 = self.feature_extractor(x)
 
         # max pooling
         x = torch.max(x, 2, keepdim=True)[0]
 
+        # concatenate feature transform
+        x = x.expand(-1, -1, x_t2.shape[2])
+        x = torch.cat((x_t2, x), dim=1)
+
         # FC layers
         x = torch.relu(self.conv1(x))
         x = torch.relu(self.conv2(x))
-        x = self.conv3(x)
+        x = torch.relu(self.conv3(x))
+        x = self.conv4(x)
 
         # reshape to (batch_size, sequence_len, embedding_dim)
         x = x.view(-1, self.sequence_len, self.embedding_dim)
