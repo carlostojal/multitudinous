@@ -5,3 +5,4 @@ venv/
 *.onnx
 wandb
 runs
+weights

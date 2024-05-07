@@ -6,7 +6,7 @@ import numpy as np
 
 BIT_PRECISION_16 = (2**16)-1
 
-class CARLA(Dataset):
+class CARLA_RGBD(Dataset):
     def __init__(self, root: str, shape: tuple = (640, 480)):
         self.root = root
         self.shape = shape
