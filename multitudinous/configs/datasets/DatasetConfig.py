@@ -19,6 +19,9 @@ class DatasetConfig(Config):
         self.min_points_threshold = None
         self.n_pcl_classes = None
 
+        # camera specific parameters
+        self.img_shape = None
+
     def parse_from_file(self, filename: str) -> None:
         
         conf = None
@@ -32,7 +35,12 @@ class DatasetConfig(Config):
             self.val_path = conf['val_path']
             self.test_path = conf['test_path']
 
+            # point cloud specific
             if 'min_points_threshold' in conf:
                 self.min_points_threshold = conf['min_points_threshold']
             if 'n_pcl_classes' in conf:
                 self.n_pcl_classes = conf['n_pcl_classes']
+
+            # camera specific
+            if 'img_shape' in conf:
+                self.img_shape = conf['img_shape']
