@@ -1,19 +1,31 @@
 import torch
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import Dataset
 import os
 from PIL import Image
+from ..configs.datasets.DatasetConfig import DatasetConfig, SubSet
 import numpy as np
 
 BIT_PRECISION_16 = (2**16)-1
 
 class TUM_RGBD(Dataset):
-    def __init__(self, root: str, shape: tuple = (640, 480)):
-        self.root = root
-        self.shape = shape
+    def __init__(self, config: DatasetConfig, subset: SubSet):
+
+        subdir: str = None
+        if subset == SubSet.TRAIN:
+            subdir = config.train_path
+        elif subset == SubSet.VAL:
+            subdir = config.val_path
+        elif subset == SubSet.TEST:
+            subdir = config.test_path
+        else:
+            raise ValueError(f"Invalid subset {subset}")
+        
+        self.root = os.path.join(config.base_path, subdir)
+        self.shape = config.img_shape
 
         # load the rgb images from "root/rgb" to a list
         self.rgb = []
-        fullpath = os.path.join(root, "rgb")
+        fullpath = os.path.join(self.root, "rgb")
         rgb_imgs = os.listdir(fullpath)
         rgb_imgs.sort()
         for file in rgb_imgs:
@@ -22,7 +34,7 @@ class TUM_RGBD(Dataset):
 
         # load the depth images from "root/depth" to a list
         self.depth = []
-        fullpath = os.path.join(root, "depth")
+        fullpath = os.path.join(self.root, "depth")
         depth_imgs = os.listdir(fullpath)
         depth_imgs.sort()
         for file in depth_imgs:
