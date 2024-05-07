@@ -2,44 +2,61 @@ from torch.utils.data import Dataset
 import os
 import torch
 import numpy as np
+from random import randint
+from ..configs.datasets.DatasetConfig import DatasetConfig, SubSet
+from ..utils.pointclouds import farthest_point_sampling
 
 class CARLA_PCL_SEG(Dataset):
-    def __init__(self, root: str, batch_size:int = 1, n_classes:int = 28):
-        self.root = root
-        self.pcl = []
-        self.batch_size = batch_size
-        self.n_classes = n_classes
+    def __init__(self, config: DatasetConfig, subset: SubSet):
+
+        subdir: str = None
+        if subset == SubSet.TRAIN:
+            subdir = config.train_path
+        elif subset == SubSet.VAL:
+            subdir = config.val_path
+        elif subset == SubSet.TEST:
+            subdir = config.test_path
+        else:
+            raise ValueError(f"Invalid subset {subset}")
         
-        fullpath = os.path.join(root, "lidarSegm")
-        pcl_files = os.listdir(fullpath)
+        self.root = os.path.join(config.base_path, subdir) # dataset root directory
+        self.pcl = [] # file paths list
+        self.min_points_threshold = config.min_points_threshold # randomly remove extra points on each sample
+        self.n_classes = config.n_pcl_classes # number of segmentation classes
+        
+        pcl_files = os.listdir(self.root)
         pcl_files.sort()
         
         for file in pcl_files:
-            # append the filename to the list
-            self.pcl.append(os.path.join(fullpath, file))
+            sample = None
+            gt = None
+            try:
+                sample, gt = self.get_data_pcl(os.path.join(self.root, file))
+                del sample
+                del gt
+            except RuntimeError as e:
+                print(e)
+                continue # skip invalid point clouds
+            self.pcl.append(os.path.join(self.root, file))
             
             
     def __len__(self):
-        return len(self.pcl) 
+        return len(self.pcl)
     
     
     def __getitem__(self, idx):
-        
-        # Check bounds
-        if idx >= len(self.pcl) or idx < 0:
-            return
 
         pcl_filename = self.pcl[idx]
 
         # Verify that the file exists
         try:
-            open(pcl_filename, 'rb')
+            f = open(pcl_filename, 'rb')
+            f.close()
         except FileNotFoundError:
             return
         
         # Get the number of points, their coordinates, and the class tag of each
         pcl_tensor, ground_truth_tensor = self.get_data_pcl(pcl_filename)
-        print(f"N_points: {self.n_points}")
 
         return pcl_tensor, ground_truth_tensor
     
@@ -62,7 +79,7 @@ class CARLA_PCL_SEG(Dataset):
             x = float(data[0])
             y = float(data[1])
             z = float(data[2])
-            class_tag = int(data[-1])
+            class_tag = int(data[-1]) # the class tag is the last element
 
             matrix_class[class_tag-1] = 1               # Put 1 in the class tag position in the matrix
             
@@ -71,7 +88,26 @@ class CARLA_PCL_SEG(Dataset):
 
             self.n_points += 1                          # Count the number of points in the point cloud
 
-        return torch.Tensor(np.asarray(points)).unsqueeze(0), torch.Tensor(np.asarray(matrix_classes)).unsqueeze(0)
+        # verify if the point cloud dimension is smaller than the threshold
+        if len(points) < self.min_points_threshold:
+            raise RuntimeError(f"Expected at least {self.min_points_threshold} points! Got {len(points)}.")
+        
+        # remove random points until the threshold is reached
+        max_index = len(points) - 1
+        n_points_to_remove = len(points) - self.min_points_threshold
+        for _ in range(n_points_to_remove):
+            index_to_remove = randint(0, max_index) # sample a random integer in the range of the point count
+            del points[index_to_remove] # remove the point
+            del matrix_classes[index_to_remove] # remove the ground truth classes
+            max_index -= 1 # given a point has been removed, the maximum index has decreased
+
+        # sample the points using the farthest point sampling algorithm
+        """
+        points = farthest_point_sampling(np.asarray(points), n_points=self.min_points_threshold)
+        """
+            
+        # finally, convert the arrays to tensors
+        return torch.Tensor(points), torch.Tensor(np.asarray(matrix_classes))
     
     
     def get_dataset(self):
@@ -87,7 +123,8 @@ class CARLA_PCL_SEG(Dataset):
             
         return pcl_batch, ground_truth_batch
     
-
+# ------------------------------------------------------
+# TODO: REMOVE AFTER TESTING
 if __name__ == "__main__":    
     dataset = CARLA_PCL_SEG("../../../Carla/PythonAPI/projeto_informatico/_out", batch_size=2, n_classes=28)
     

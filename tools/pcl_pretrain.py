@@ -32,22 +32,20 @@ if __name__ == "__main__":
     print("done.")
 
     # initialize wandb
-    """
     print("Initializing loggers...", end=" ")
     wandb.init(
-        project='point_cloud_pretrainer',
+        project='pcl_pretrainer',
         name=f"{config.name}_{datetime.datetime.now().strftime('%H:%M:%S_%Y-%m-%d')}",
         config=config.__dict__
     )
     writer = SummaryWriter(f"runs/pcl_pretrainer/{config.name}_{datetime.datetime.now().strftime('%H:%M:%S_%Y-%m-%d')}")
     print("done.")
-    """
 
     # load the dataset
     print("Loading dataset...", end=" ")
     dataset_conf: DatasetConfig = DatasetConfig()
     dataset_conf.parse_from_file(args.dataset)
-    train_set, val_set, test_set = build_dataset(dataset_conf.name, dataset_conf.base_path, dataset_conf.train_path, dataset_conf.val_path, dataset_conf.test_path)
+    train_set, val_set, test_set = build_dataset(dataset_conf)
     print("done.")
 
     # create the dataloader
@@ -85,6 +83,7 @@ if __name__ == "__main__":
 
     # ------------------- DEBUG -------------------
 
+    """
     rand_pcl = torch.rand((config.batch_size, config.encoder.num_points, config.encoder.point_dim))
     rand_pcl = rand_pcl.to(device)
 
@@ -95,8 +94,8 @@ if __name__ == "__main__":
     print(pred_seg.shape)
 
     # ------------------- DEBUG -------------------
-
     """
+
     # train the model
     for epoch in range(config.epochs):
 
@@ -111,7 +110,7 @@ if __name__ == "__main__":
             # zero the gradients for each batch
             optim.zero_grad()
 
-            # build the rgb-d image
+            # copy the pointcloud and segmentation to device
             pcl = pcl.to(device)
             seg = seg.to(device)
 
@@ -135,7 +134,7 @@ if __name__ == "__main__":
             # adjust the weights
             optim.step()
 
-            print(f"\rEpoch {epoch+1}/{config.epochs}, Sample {curr_sample}/{train_len}, Train Loss: {train_loss.item()}", end=" ")
+            print(f"\rEpoch {epoch+1}/{config.epochs}, Sample {curr_sample}/{train_len*config.batch_size}, Train Loss: {train_loss.item()}", end=" ")
 
         print()
 
@@ -156,6 +155,10 @@ if __name__ == "__main__":
         curr_sample = 0
         for pcl, seg in val_loader:
 
+            # copy the pointcloud and segmentation to device
+            pcl = pcl.to(device)
+            seg = seg.to(device)
+
             # forward pass
             pred_seg = pcl_pretrainer(pcl)
 
@@ -171,7 +174,7 @@ if __name__ == "__main__":
 
             del pcl, seg, pred_seg
 
-            print(f"\rEpoch {epoch+1}/{config.epochs}, Sample {curr_sample}/{val_len}, Val Loss: {val_loss.item()}", end=" ")
+            print(f"\rEpoch {epoch+1}/{config.epochs}, Sample {curr_sample}/{val_len*config.batch_size}, Val Loss: {val_loss.item()}", end=" ")
 
         print()
 
@@ -201,6 +204,10 @@ if __name__ == "__main__":
     print("Testing the model...", end=" ")
     for pcl, seg in test_loader:
 
+        # copy the pointcloud and segmentation to device
+        pcl = pcl.to(device)
+        seg = seg.to(device)
+
         # forward pass
         pred_seg = pcl_pretrainer(pcl)
 
@@ -214,7 +221,7 @@ if __name__ == "__main__":
 
         test_loss = test_loss_total / pred_seg.shape[0]
 
-        print(f"\rTesting sample {curr_sample}/{test_len}, Test Loss: {test_loss.item()}", end=" ")
+        print(f"\rTesting sample {curr_sample}/{test_len*config.batch_size}, Test Loss: {test_loss.item()}", end=" ")
 
     print()
 
@@ -233,7 +240,6 @@ if __name__ == "__main__":
     wandb.finish()
     writer.flush()
     writer.close()
-    """
 
     print("done.")
 
