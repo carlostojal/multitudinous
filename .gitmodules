@@ -1,0 +1,3 @@
+[submodule "multitudinous/backbones/point_cloud/NDT-Netpp"]
+	path = multitudinous/backbones/point_cloud/NDT-Netpp
+	url = https://github.com/carlostojal/NDT-Netpp.git
