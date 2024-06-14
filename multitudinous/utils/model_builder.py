@@ -9,7 +9,7 @@ def build_multitudinous(img_backbone: str, point_cloud_backbone: str,
                         neck: str, head: str,
                         img_backbone_weights_path: str = None, point_cloud_backbone_weights_path: str = None,
                         neck_weights_path: str = None, head_weights_path: str = None,
-                        embedding_dim: int = 762) -> Multitudinous:
+                        embedding_dim: int = 1024) -> Multitudinous:
     
     # TODO: add a task parameter to the model builder
     
@@ -31,7 +31,7 @@ def build_multitudinous(img_backbone: str, point_cloud_backbone: str,
     return model
 
 # build the image backbone
-def build_img_backbone(img_backbone: str, in_channels: int = 4, embed: bool = False, embedding_dim: int = 762, weights_path: str = None) -> torch.nn.Module:
+def build_img_backbone(img_backbone: str, in_channels: int = 4, embed: bool = False, embedding_dim: int = 1024, weights_path: str = None) -> torch.nn.Module:
     if img_backbone not in img_backbones:
         raise ValueError(f'Image backbone {img_backbone} not found. Available image backbones are {list(img_backbones.keys())}.')
     img_b = img_backbones[img_backbone](in_channels=in_channels)
@@ -82,7 +82,7 @@ def build_neck(neck: str, embedding_dim: int, weights_path: str = None) -> torch
     return neck
 
 # build the head
-def build_head(head: str, embedding_dim: int = 762, task: Task = Task.GRID, weights_path: str = None) -> torch.nn.Module:
+def build_head(head: str, embedding_dim: int = 1024, task: Task = Task.GRID, weights_path: str = None) -> torch.nn.Module:
     if head not in heads:
         raise ValueError(f'Head {head} not found. Available heads are {list(heads.keys())}.')
     head = heads[head](embedding_dim=embedding_dim, task=task)

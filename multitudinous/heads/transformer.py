@@ -15,7 +15,7 @@ class TransformerHead(nn.Module):
         For generalized 3-dimensional environment perception.
         """
 
-        def __init__(self, embedding_dim: int = 762) -> None:
+        def __init__(self, embedding_dim: int = 1024) -> None:
             super().__init__()
 
             # TODO: have considerations on the kernel size and stride considering the hidden dimension and desired voxel grid size (e.g. 32x32x32)
@@ -51,7 +51,7 @@ class TransformerHead(nn.Module):
         For Formula Student Driverless.
         """
 
-        def __init__(self, embedding_dim: int = 762) -> None:
+        def __init__(self, embedding_dim: int = 1024) -> None:
             super().__init__()
 
             # TODO
@@ -73,7 +73,7 @@ class TransformerHead(nn.Module):
 
             raise NotImplementedError("Cone decoder is not implemented yet.")
 
-    def __init__(self, embedding_dim: int = 762, num_heads: int = 12, num_layers: int = 12, task: Task = Task.GRID) -> None:
+    def __init__(self, embedding_dim: int = 1024, num_heads: int = 12, num_layers: int = 12, task: Task = Task.GRID) -> None:
         super().__init__()
 
         # initialize the decoder

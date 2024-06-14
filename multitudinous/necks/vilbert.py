@@ -11,7 +11,7 @@ class ViLBERT_Encoder(nn.Module):
     - num_heads (int): the number of heads in the multi-head attention
     """
 
-    def __init__(self, embedding_dim: int = 762, num_heads: int = 12, masking_prob: float = 0.15, mask_prob: float = 0.8, random_prob: float = 0.1, unchanged_prob: float = 0.1) -> None:
+    def __init__(self, embedding_dim: int = 1024, num_heads: int = 12, masking_prob: float = 0.15, mask_prob: float = 0.8, random_prob: float = 0.1, unchanged_prob: float = 0.1) -> None:
         super().__init__()
 
         self.embedding_dim = embedding_dim
@@ -108,7 +108,7 @@ class ViLBERT(nn.Module):
 
     """
 
-    def __init__(self, embedding_dim: int = 762, num_heads: int = 12, num_layers: int = 12) -> None:
+    def __init__(self, embedding_dim: int = 1024, num_heads: int = 12, num_layers: int = 12) -> None:
         super().__init__()
 
         # initialize the encoder layers
