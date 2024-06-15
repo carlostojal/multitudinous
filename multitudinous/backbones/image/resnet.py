@@ -235,9 +235,15 @@ class SEResNet50(ResNet50):
     def forward(self, x: Tensor) -> tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:
         return super().forward(x)
 
+def SEResNet50Embedding(in_channels: int, in_res = (1920, 1080), with_dropout: bool = True, sequence_len: int = 2048, embedding_dim: int = 1024):
+    return ResNet50Embedding(block=SEBottleneckBlock, in_channels=in_channels, in_res=in_res, with_dropout=with_dropout, sequence_len=sequence_len, embedding_dim=embedding_dim)
+
 class CBAMResNet50(ResNet50):
     def __init__(self, in_channels: int):
         super().__init__(block=CBAMBottleneckBlock, in_channels=in_channels)
 
     def forward(self, x: Tensor) -> tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:
         return super().forward(x)
+    
+def CBAMResNet50Embedding(in_channels: int, in_res = (1920, 1080), with_dropout: bool = True, sequence_len: int = 2048, embedding_dim: int = 1024):
+    return ResNet50Embedding(block=CBAMBottleneckBlock, in_channels=in_channels, in_res=in_res, with_dropout=with_dropout, sequence_len=sequence_len, embedding_dim=embedding_dim)
