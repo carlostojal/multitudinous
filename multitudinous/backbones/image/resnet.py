@@ -194,7 +194,7 @@ class ResNet50(ResNet):
 
         return x1, x2, x3, x4, out
 
-class ResNet50Embedding(ResNet50):
+class ResNet50Embedding(nn.Module):
     def __init__(self, 
                  block: Type[Union[BottleneckBlock,SEBottleneckBlock,CBAMBottleneckBlock]] = BottleneckBlock, 
                  in_channels: int = 4, 
@@ -202,7 +202,7 @@ class ResNet50Embedding(ResNet50):
                  with_dropout: bool = True,
                  sequence_len: int = 2048, 
                  embedding_dim: int = 1024):
-        super().__init__(block, in_channels, with_dropout)
+        super().__init__()
 
         if in_res[0] % 32 != 0 or in_res[1] % 32 != 0:
             raise ValueError("The input resolution must be divisible by 32.")
@@ -210,12 +210,15 @@ class ResNet50Embedding(ResNet50):
         self.sequence_len = sequence_len
         self.embedding_dim = embedding_dim
 
+        # create the feature extractor
+        self.feature_extractor = ResNet50(block=block, in_channels=in_channels, with_dropout=with_dropout)
+
         # initialize the embedding layer. The input are the encoded features from the ResNet50. The output is the embedding with shape (sequence_len, embedding_dim)
         # the encoded features have shape (batch_size, 2048, W/32, H/32)
         self.embedding = nn.Linear(in_res[0] * in_res[1] // (32 * 32), sequence_len * embedding_dim)
 
     def forward(self, x: Tensor) -> Tensor:
-        x1, x2, x3, x4, out = super().forward(x)
+        x1, x2, x3, x4, out = self.feature_extractor(x)
 
         # flatten the output
         out = out.view(out.size(0), -1)
