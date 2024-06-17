@@ -1,10 +1,11 @@
 name: cbam_resnet50-pointnet
+batch_size: 4
+embedding_dim: 1024
+sequence_len: 2048
 img_backbone:
   name: cbam_resnet50
-  batch_size: 16
   img_width: 640
   img_height: 480
 point_cloud_backbone:
   name: pointnet
-  batch_size: 16
   num_points: 1024

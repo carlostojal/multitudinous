@@ -1,11 +1,11 @@
-name: se_resnet50-pointnet
+name: se_resnet50-ndtnet
 batch_size: 4
 embedding_dim: 1024
 sequence_len: 2048
 img_backbone:
   name: se_resnet50
-  img_width: 640
-  img_height: 480
+  img_width: 1920
+  img_height: 1080
 point_cloud_backbone:
-  name: pointnet
-  num_points: 1024
+  name: ndtnet
+  num_points: 60000
