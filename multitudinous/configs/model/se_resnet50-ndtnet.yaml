@@ -3,9 +3,19 @@ batch_size: 4
 embedding_dim: 1024
 sequence_len: 2048
 img_backbone:
-  name: se_resnet50
+  name: se_resnet50_embedding
+  in_channels: 4
   img_width: 1920
   img_height: 1080
 point_cloud_backbone:
-  name: ndtnet
+  name: ndtnet_embedding
   num_points: 60000
+  point_dim: 3
+  feature_dim: 1024
+neck:
+  name: vilbert
+head:
+  name: grid
+  grid_x: 200
+  grid_y: 200
+  grid_z: 16
