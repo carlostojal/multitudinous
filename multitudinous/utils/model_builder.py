@@ -1,20 +1,23 @@
 import torch
 from torch import nn
 from multitudinous.model_index import img_backbones, point_cloud_backbones, img_pretraining, point_cloud_pretraining, necks, heads
+from multitudinous.backbones.image.resnet import SEResNet50Embedding
 from multitudinous.tasks import Task
+from multitudinous.configs.model.ModelConfig import ImgBackboneConfig, PointCloudBackboneConfig, NeckConfig, HeadConfig, ModelConfig
 from multitudinous.model_zoo.multitudinous import Multitudinous
 
 # ensemble the multitudinous model
-def build_multitudinous(img_backbone: str, point_cloud_backbone: str,
-                        neck: str, head: str,
+def build_multitudinous(img_backbone: ImgBackboneConfig, point_cloud_backbone: PointCloudBackboneConfig,
+                        neck: NeckConfig, head: HeadConfig,
                         img_backbone_weights_path: str = None, point_cloud_backbone_weights_path: str = None,
                         neck_weights_path: str = None, head_weights_path: str = None,
-                        embedding_dim: int = 1024) -> Multitudinous:
+                        embedding_dim: int = 1024,
+                        sequence_len: int = 2048) -> Multitudinous:
     
     # TODO: add a task parameter to the model builder
     
     # create the image backbone
-    img_b = build_img_backbone(img_backbone, embed=True, embedding_dim=embedding_dim, weights_path=img_backbone_weights_path)
+    img_b = build_img_backbone(img_backbone, embedding_dim=embedding_dim, sequence_len=sequence_len, weights_path=img_backbone_weights_path)
 
     # create the point cloud backbone
     point_cloud_b = build_point_cloud_backbone(point_cloud_backbone, point_cloud_backbone_weights_path)
@@ -31,22 +34,26 @@ def build_multitudinous(img_backbone: str, point_cloud_backbone: str,
     return model
 
 # build the image backbone
-def build_img_backbone(img_backbone: str, in_channels: int = 4, embed: bool = False, embedding_dim: int = 1024, weights_path: str = None) -> torch.nn.Module:
-    if img_backbone not in img_backbones:
-        raise ValueError(f'Image backbone {img_backbone} not found. Available image backbones are {list(img_backbones.keys())}.')
-    img_b = img_backbones[img_backbone](in_channels=in_channels)
+def build_img_backbone(img_backbone: ImgBackboneConfig, embedding_dim: int = 1024, sequence_len: int = 2048, weights_path: str = None) -> torch.nn.Module:
+    if img_backbone.name not in img_backbones:
+        raise ValueError(f'Image backbone {img_backbone.name} not found. Available image backbones are {list(img_backbones.keys())}.')
+    img_b = SEResNet50Embedding(in_channels=int(img_backbone.in_channels), 
+                                in_res=(int(img_backbone.img_height), int(img_backbone.img_width)),
+                                embedding_dim=embedding_dim, 
+                                sequence_len=sequence_len)
+    """
+    img_b = img_backbones[img_backbone.name](in_channels=int(img_backbone.in_channels), 
+                                             in_res=(int(img_backbone.img_height),int(img_backbone.img_width)), 
+                                             embedding_dim=embedding_dim, 
+                                             sequence_len=sequence_len)
+    """
     if weights_path is not None:
         img_b.load_state_dict(torch.load(weights_path))
-    
-    # add the ViT embedding, if "embed" is True
-    if embed:
-        embedder = img_backbones['vit'](embedding_dim=embedding_dim)
-        img_b = nn.Sequential(img_b, embedder)
 
     return img_b
 
 # build the image pre-training model
-def build_img_pretraining(img_pretraining_model: str, in_channels: int, weights_path: str = None) -> torch.nn.Module:
+def build_img_pretraining(img_pretraining_model: str, in_channels: int = 4, weights_path: str = None) -> torch.nn.Module:
     if img_pretraining_model not in img_pretraining_model:
         raise ValueError(f'Image pre-training model {img_pretraining_model} not found. Available image pre-training models are {list(img_pretraining.keys())}.')
     img_p = img_pretraining[img_pretraining_model](in_channels=in_channels)
@@ -55,10 +62,14 @@ def build_img_pretraining(img_pretraining_model: str, in_channels: int, weights_
     return img_p
 
 # build the point cloud backbone
-def build_point_cloud_backbone(point_cloud_backbone: str, point_dim: int = 3, weights_path: str = None) -> torch.nn.Module:
-    if point_cloud_backbone not in point_cloud_backbones:
-        raise ValueError(f'Point cloud backbone {point_cloud_backbone} not found. Available point cloud backbones are {list(point_cloud_backbones.keys())}.')
-    point_cloud_b = point_cloud_backbones[point_cloud_backbone](point_dim=point_dim)
+def build_point_cloud_backbone(point_cloud_backbone: PointCloudBackboneConfig, embedding_dim: int = 1024, sequence_len: int = 1024, weights_path: str = None) -> torch.nn.Module:
+    if point_cloud_backbone.name not in point_cloud_backbones:
+        raise ValueError(f'Point cloud backbone {point_cloud_backbone.name} not found. Available point cloud backbones are {list(point_cloud_backbones.keys())}.')
+    point_cloud_b = point_cloud_backbones[point_cloud_backbone.name](point_dim=point_cloud_backbone.point_dim, 
+                                                                     num_points=point_cloud_backbone.num_points,
+                                                                     feature_dim=point_cloud_backbone.feature_dim,
+                                                                     sequence_len=sequence_len, 
+                                                                     embedding_dim=embedding_dim)
     if weights_path is not None:
         point_cloud_b.load_state_dict(torch.load(weights_path))
     return point_cloud_b
@@ -73,18 +84,18 @@ def build_point_cloud_pretraining(point_cloud_pretraining_model: str, point_dim:
     return point_cloud_p
 
 # build the neck
-def build_neck(neck: str, embedding_dim: int, weights_path: str = None) -> torch.nn.Module:
-    if neck not in necks:
-        raise ValueError(f'Neck {neck} not found. Available necks are {list(necks.keys())}.')
+def build_neck(neck: NeckConfig, embedding_dim: int, weights_path: str = None) -> torch.nn.Module:
+    if neck.name not in necks:
+        raise ValueError(f'Neck {neck.name} not found. Available necks are {list(necks.keys())}.')
     neck = necks[neck](embedding_dim=embedding_dim)
     if weights_path is not None:
         neck.load_state_dict(torch.load(weights_path))
     return neck
 
 # build the head
-def build_head(head: str, embedding_dim: int = 1024, task: Task = Task.GRID, weights_path: str = None) -> torch.nn.Module:
-    if head not in heads:
-        raise ValueError(f'Head {head} not found. Available heads are {list(heads.keys())}.')
+def build_head(head: HeadConfig, embedding_dim: int = 1024, task: Task = Task.GRID, weights_path: str = None) -> torch.nn.Module:
+    if head.name not in heads:
+        raise ValueError(f'Head {head.name} not found. Available heads are {list(heads.keys())}.')
     head = heads[head](embedding_dim=embedding_dim, task=task)
     if weights_path is not None:
         head.load_state_dict(torch.load(weights_path))
