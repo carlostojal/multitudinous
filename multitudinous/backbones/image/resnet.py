@@ -194,40 +194,6 @@ class ResNet50(ResNet):
 
         return x1, x2, x3, x4, out
 
-class ResNet50Embedding(nn.Module):
-    def __init__(self, 
-                 block: Type[Union[BottleneckBlock,SEBottleneckBlock,CBAMBottleneckBlock]] = BottleneckBlock, 
-                 in_channels: int = 4, 
-                 in_res = (1080, 1920),
-                 with_dropout: bool = True,
-                 sequence_len: int = 2048, 
-                 embedding_dim: int = 1024):
-        super().__init__()
-
-        self.sequence_len = sequence_len
-        self.embedding_dim = embedding_dim
-
-        # create the feature extractor
-        self.feature_extractor = ResNet50(block=block, in_channels=in_channels, with_dropout=with_dropout)
-
-        # initialize the embedding layer. The input are the encoded features from the ResNet50. The output is the embedding with shape (sequence_len, embedding_dim)
-        # the encoded features have shape (batch_size, 2048, W/32, H/32)
-        self.embedding = nn.Linear(in_res[0] * in_res[1] // (32 * 32), sequence_len * embedding_dim)
-
-    def forward(self, x: Tensor) -> Tensor:
-        x1, x2, x3, x4, out = self.feature_extractor(x)
-
-        # flatten the output
-        out = out.view(out.size(0), -1)
-
-        # apply the embedding
-        out = self.embedding(out)
-
-        # reshape the output to [batch_size, sequence_len, embedding_dim]
-        out = out.view(out.size(0), -1, self.embedding_dim)
-
-        return out
-
 class SEResNet50(ResNet50):
     def __init__(self, in_channels: int):
         super().__init__(block=SEBottleneckBlock, in_channels=in_channels)
@@ -235,15 +201,9 @@ class SEResNet50(ResNet50):
     def forward(self, x: Tensor) -> tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:
         return super().forward(x)
 
-def SEResNet50Embedding(in_channels: int, in_res = (1080, 1920), with_dropout: bool = True, sequence_len: int = 2048, embedding_dim: int = 1024):
-    return ResNet50Embedding(block=SEBottleneckBlock, in_channels=in_channels, in_res=in_res, with_dropout=with_dropout, sequence_len=sequence_len, embedding_dim=embedding_dim)
-
 class CBAMResNet50(ResNet50):
     def __init__(self, in_channels: int):
         super().__init__(block=CBAMBottleneckBlock, in_channels=in_channels)
 
     def forward(self, x: Tensor) -> tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:
         return super().forward(x)
-    
-def CBAMResNet50Embedding(in_channels: int, in_res = (1080, 1920), with_dropout: bool = True, sequence_len: int = 2048, embedding_dim: int = 1024):
-    return ResNet50Embedding(block=CBAMBottleneckBlock, in_channels=in_channels, in_res=in_res, with_dropout=with_dropout, sequence_len=sequence_len, embedding_dim=embedding_dim)
