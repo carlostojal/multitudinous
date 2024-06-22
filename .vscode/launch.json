@@ -1,0 +1,32 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Train MULTITUDINOUS",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "tools/train.py",
+            "console": "integratedTerminal",
+            "args": ""
+        },
+        {
+            "name": "Pre-train SE-ResNet-50-UNet",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "tools/img_pretrain.py",
+            "console": "integratedTerminal",
+            "args": "--config multitudinous/configs/pretraining/se_resnet_unet.yaml --dataset multitudinous/configs/datasets/carla.yaml --output weights/img_pretrain"
+        },
+        {
+            "name": "Pre-train NDT-Net",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "multitudinous/backbones/point_cloud/NDT_Netpp/tools/train.py",
+            "console": "integratedTerminal",
+            "args": "--batch_size 4 --train_path ../data/PCL_Segmentation_3000/train --val_path ../data/PCL_Segmentation_3000/validation --test_path ../data/PCL_Segmentation_3000/test"
+        }
+    ]
+}
