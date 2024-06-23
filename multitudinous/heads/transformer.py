@@ -15,7 +15,7 @@ class TransformerHead(nn.Module):
         For generalized 3-dimensional environment perception.
         """
 
-        def __init__(self, embedding_dim: int = 1024) -> None:
+        def __init__(self, embedding_dim: int = 768) -> None:
             super().__init__()
 
             # TODO: have considerations on the kernel size and stride considering the hidden dimension and desired voxel grid size (e.g. 32x32x32)
@@ -51,7 +51,7 @@ class TransformerHead(nn.Module):
         For Formula Student Driverless.
         """
 
-        def __init__(self, embedding_dim: int = 1024) -> None:
+        def __init__(self, embedding_dim: int = 768) -> None:
             super().__init__()
 
             # TODO
@@ -73,7 +73,7 @@ class TransformerHead(nn.Module):
 
             raise NotImplementedError("Cone decoder is not implemented yet.")
 
-    def __init__(self, embedding_dim: int = 1024, num_heads: int = 12, num_layers: int = 12, task: Task = Task.GRID) -> None:
+    def __init__(self, embedding_dim: int = 768, num_heads: int = 12, num_layers: int = 12, task: Task = Task.GRID) -> None:
         super().__init__()
 
         # initialize the decoder
@@ -95,11 +95,11 @@ class TransformerHead(nn.Module):
     def forward(self, img_embeddings: torch.Tensor, pcl_embeddings: torch.Tensor) -> torch.Tensor:
 
         # verify the input shapes
-        if img_embeddings.shape != pcl_embeddings.shape:
-            raise ValueError("The image and point cloud embeddings must have the same shape!")
+        if img_embeddings.shape[2] != pcl_embeddings.shape[2]:
+            raise ValueError("The image and point cloud embeddings must have the same embedding dimension!")
         
         # concatenate the image and point cloud embeddings, as in UniT (https://arxiv.org/abs/2102.10772)
-        fused_embeddings = torch.cat((img_embeddings, pcl_embeddings), dim=-1)
+        fused_embeddings = torch.cat((img_embeddings, pcl_embeddings), dim=1)
 
         # initialize the task embedding, as in UniT (https://arxiv.org/abs/2102.10772)
         task_embedding = torch.zeros_like(fused_embeddings)
