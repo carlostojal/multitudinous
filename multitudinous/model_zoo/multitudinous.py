@@ -6,7 +6,7 @@ from multitudinous.backbones.point_cloud.NDT_Netpp.ndtnetpp.preprocessing.ndtnet
 # Multitudinous implementation
 class Multitudinous(torch.nn.Module):
 
-    def __init__(self, img_backbone: nn.Module, point_cloud_backbone: nn.Module, neck: nn.Module, head: nn.Module, embedding_dim: int = 1024) -> None:
+    def __init__(self, img_backbone: nn.Module, point_cloud_backbone: nn.Module, neck: nn.Module, head: nn.Module, embedding_dim: int = 768) -> None:
         super().__init__()
 
         self.embedding_dim = embedding_dim
@@ -14,6 +14,9 @@ class Multitudinous(torch.nn.Module):
         self.point_cloud_backbone = point_cloud_backbone
         self.neck = neck
         self.head = head
+
+        # check if the model is on the GPU
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
     def forward(self, point_cloud: torch.Tensor, rgbd: torch.Tensor) -> torch.Tensor:
@@ -46,6 +49,7 @@ class Multitudinous(torch.nn.Module):
             n_point_cloud_features = (point_cloud_features.shape[0] * point_cloud_features.shape[1] * point_cloud_features.shape[2] // self.embedding_dim) * self.embedding_dim
             point_cloud_features = torch.flatten(point_cloud_features)[:n_point_cloud_features].reshape(point_cloud_features.shape[0], -1, self.embedding_dim)
 
+        """
         # create a thread to extract point cloud features and another to extract rgbd features
         rgbd_thread = Thread(target=run_img_backbone)
         point_cloud_thread = Thread(target=run_point_cloud_backbone)
@@ -57,6 +61,11 @@ class Multitudinous(torch.nn.Module):
         # wait for the threads
         rgbd_thread.join()
         point_cloud_thread.join()
+        """
+
+        # TODO: remove this after testing
+        point_cloud_features = torch.rand((1, 1000, 768)).to(self.device)
+        rgbd_features = torch.rand((1, 880, 768)).to(self.device)
 
         # fuse the features using the neck
         rgbd_embeddings, point_cloud_embeddings = self.neck(point_cloud_features, rgbd_features)

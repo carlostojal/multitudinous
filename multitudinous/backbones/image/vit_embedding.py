@@ -10,7 +10,7 @@ class ViT_Embedding(torch.nn.Module):
     - feature_dim (torch.Size): the dimension of the input feature map
     - embedding_dim (int): the dimension of the embedding
     """
-    def __init__(self, patch_size: int = 1, embedding_dim: int = 1024, feature_dim: torch.Size = torch.Size((1, 2048, 15, 20))) -> None:
+    def __init__(self, patch_size: int = 1, embedding_dim: int = 768, feature_dim: torch.Size = torch.Size((1, 2048, 15, 20))) -> None:
         super().__init__()
         
         # initialize the patch size

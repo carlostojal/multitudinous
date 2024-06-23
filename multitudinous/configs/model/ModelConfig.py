@@ -3,58 +3,65 @@ from ..Config import Config
 from typing import Tuple
 
 class ImgBackboneConfig:
-    def __init__(self) -> None:
-        self.name: str = None
-        self.weights_path: str = None
-        self.in_channels: int = None
-        self.img_width: int = None
-        self.img_height: int = None
+    def __init__(self, name: str = None, weights_path: str = None, in_channels: int = None,
+                 img_width: int = None, img_height: int = None) -> None:
+        self.name = name
+        self.weights_path = weights_path
+        self.in_channels = in_channels
+        self.img_width = img_width
+        self.img_height = img_height
     
     def __str__(self) -> str:
         return f"ImgBackboneConfig(name={self.name}, weights_path={self.weights_path}, in_channels={self.in_channels}, img_width={self.img_width}, img_height={self.img_height})"
 
 class PointCloudBackboneConfig:
-    def __init__(self) -> None:
-        self.name: str = None
-        self.weights_path: str = None
-        self.point_dim: int = None
-        self.num_points: int = None
-        self.feature_dim: int = None
+    def __init__(self, name: str = None, weights_path: str = None, point_dim: int = None,
+                 num_points: int = None, feature_dim: int = None) -> None:
+        self.name = name
+        self.weights_path = weights_path
+        self.point_dim = point_dim
+        self.num_points = num_points
+        self.feature_dim = feature_dim
 
     def __str__(self) -> str:
         return f"PointCloudBackboneConfig(name={self.name}, weights_path={self.weights_path}, point_dim={self.point_dim}, num_points={self.num_points}, feature_dim={self.feature_dim})"
 
 class NeckConfig:
-    def __init__(self) -> None:
-        self.name: str = None
-        self.weights_path: str = None
+    def __init__(self, name: str = None, weights_path: str = None) -> None:
+        self.name = name
+        self.weights_path = weights_path
 
     def __str__(self) -> str:
         return f"NeckConfig(name={self.name}, weights_path={self.weights_path})"
 
 class HeadConfig:
-    def __init__(self) -> None:
-        self.name: str = None
-        self.weights_path: str = None
-        self.grid_x: int = None
-        self.grid_y: int = None
-        self.grid_z: int = None
+    def __init__(self, name: str = None, weights_path: str = None,
+                 grid_x: int = None, grid_y: int = None, grid_z: int = None) -> None:
+        self.name = name
+        self.weights_path = weights_path
+        self.grid_x = grid_x
+        self.grid_y = grid_y
+        self.grid_z = grid_z
 
     def __str__(self) -> str:
         return f"HeadConfig(name={self.name}, weights_path={self.weights_path})"
 
 class ModelConfig(Config):
 
-    def __init__(self) -> None:
-        self.name: str = None
-        self.batch_size: int = None
-        self.embedding_dim: int = None
-        self.sequence_len: int = None
-        self.img_backbone: ImgBackboneConfig = None
-        self.point_cloud_backbone: PointCloudBackboneConfig = None
-        self.neck: NeckConfig = None
-        self.head: HeadConfig = None
-
+    def __init__(self, name: str = None, batch_size: int = None,
+                 embedding_dim: int = None, sequence_len: int = None,
+                 img_backbone: ImgBackboneConfig = None,
+                 point_cloud_backbone: PointCloudBackboneConfig = None,
+                 neck: NeckConfig = None,
+                 head: HeadConfig = None) -> None:
+        self.name = name
+        self.batch_size = batch_size
+        self.embedding_dim = embedding_dim
+        self.sequence_len = sequence_len
+        self.img_backbone = img_backbone
+        self.point_cloud_backbone = point_cloud_backbone
+        self.neck = neck
+        self.head = head
 
     def parse_from_file(self, filename: str):
 

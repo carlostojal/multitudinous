@@ -193,7 +193,7 @@ class PointNetSegmentation(nn.Module):
 
 class PointNetEmbedding(nn.Module):
 
-    def __init__(self, point_dim: int = 3, sequence_len: int = 4080, embedding_dim: int = 1024) -> None:
+    def __init__(self, point_dim: int = 3, sequence_len: int = 4080, embedding_dim: int = 768) -> None:
         super().__init__()
 
         self.sequence_len = sequence_len
