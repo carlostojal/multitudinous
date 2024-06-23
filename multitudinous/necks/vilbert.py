@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 from torch.nn.modules.normalization import LayerNorm
+from typing import List
 
 class ViLBERT_Encoder(nn.Module):
     """
@@ -11,7 +12,7 @@ class ViLBERT_Encoder(nn.Module):
     - num_heads (int): the number of heads in the multi-head attention
     """
 
-    def __init__(self, embedding_dim: int = 1024, num_heads: int = 12, masking_prob: float = 0.15, mask_prob: float = 0.8, random_prob: float = 0.1, unchanged_prob: float = 0.1) -> None:
+    def __init__(self, embedding_dim: int = 1024, num_heads: int = 16, masking_prob: float = 0.15, mask_prob: float = 0.8, random_prob: float = 0.1, unchanged_prob: float = 0.1) -> None:
         super().__init__()
 
         self.embedding_dim = embedding_dim
@@ -40,6 +41,9 @@ class ViLBERT_Encoder(nn.Module):
             nn.ReLU(),
             nn.Linear(4 * embedding_dim, embedding_dim)
         )
+
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.to(self.device)
 
     def forward(self, q: torch.Tensor, k_v: torch.Tensor) -> torch.Tensor:
         """
@@ -70,13 +74,9 @@ class ViLBERT_Encoder(nn.Module):
             # generate the mask for the tokens to be replaced with random tokens, selecting 10% of the 15% of the tokens
             random_tokens = masked_tokens & (torch.rand(q.shape) < self.random_prob)
 
-            # generate the mask for the tokens to be left unchanged, selecting 10% of the tokens
-            unchanged_tokens = ~masked_tokens
-
             # apply the maskings
             q[mask_tokens] = 0
-            q[random_tokens] = torch.randint(0, q.shape[-1], random_tokens.sum())
-            q[unchanged_tokens] = q[unchanged_tokens]
+            q[random_tokens] = torch.randint(0, q.shape[-1], q[random_tokens].shape).float().to(q.device) # random number in [0, embedding_dim]
 
         q_residual = q # query residual connection
 
@@ -108,18 +108,22 @@ class ViLBERT(nn.Module):
 
     """
 
-    def __init__(self, embedding_dim: int = 1024, num_heads: int = 12, num_layers: int = 12) -> None:
+    def __init__(self, embedding_dim: int = 1024, num_heads: int = 16, num_layers: int = 12, coatt_every: int = 2) -> None:
         super().__init__()
 
-        # initialize the encoder layers
-        img_encoders = []
-        pcl_encoders = []
-        for _ in range(num_layers):
-            img_encoders.append(ViLBERT_Encoder(embedding_dim, num_heads))
-            pcl_encoders.append(ViLBERT_Encoder(embedding_dim, num_heads))
-        self.img_encoders = nn.Sequential(*img_encoders)
-        self.pcl_encoders = nn.Sequential(*pcl_encoders)
+        self.embedding_dim = embedding_dim
+        self.num_heads = num_heads
+        self.num_layers = num_layers
 
+        # how many layers between the cross-attention
+        self.coatt_every = coatt_every
+
+        # initialize the encoder layers
+        self.img_encoders = []
+        self.pcl_encoders = []
+        for _ in range(num_layers):
+            self.img_encoders.append(ViLBERT_Encoder(embedding_dim, num_heads))
+            self.pcl_encoders.append(ViLBERT_Encoder(embedding_dim, num_heads))
 
 
     def forward(self, img_embeddings: torch.Tensor, pcl_embeddings: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
@@ -134,14 +138,18 @@ class ViLBERT(nn.Module):
         - tuple[torch.Tensor, torch.Tensor]: the image and point cloud embeddings
         """
 
-        # verify the input shapes
-        if img_embeddings.shape != pcl_embeddings.shape:
+        # verify the embedding dimensions
+        if img_embeddings.shape[2] != pcl_embeddings.shape[2]:
             raise ValueError("The image and point cloud embeddings must have the same shape!")
-
-        # apply the image encoder
-        img_embeddings = self.img_encoders(img_embeddings, pcl_embeddings)
-
-        # apply the point cloud encoder
-        pcl_embeddings = self.pcl_encoders(pcl_embeddings, img_embeddings)
+        
+        # apply the cross-attention
+        for i in range(self.num_layers):
+            if i % self.coatt_every == 0:
+                img_embeddings1 = self.img_encoders[i](img_embeddings, pcl_embeddings)
+                pcl_embeddings = self.pcl_encoders[i](pcl_embeddings, img_embeddings)
+                img_embeddings = img_embeddings1 # update the image embeddings. to not affect the point cloud embeddings
+            else:
+                img_embeddings = self.img_encoders[i](img_embeddings, img_embeddings)
+                pcl_embeddings = self.pcl_encoders[i](pcl_embeddings, pcl_embeddings)
 
         return img_embeddings, pcl_embeddings
