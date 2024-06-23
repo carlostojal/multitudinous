@@ -43,5 +43,5 @@ necks = {
 
 # head models
 heads = {
-    'grid': TransformerHead.GridDecoder
+    'transformer': TransformerHead
 }
