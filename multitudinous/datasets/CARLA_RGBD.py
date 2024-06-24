@@ -21,7 +21,7 @@ class CARLA_RGBD(Dataset):
             raise ValueError(f"Invalid subset {subset}")
 
         self.root = os.path.join(config.base_path, subdir)
-        self.shape = config.img_shape
+        self.shape = (config.img_width, config.img_height)
 
         # load the rgb images from "root/rgb" to a list
         self.rgb = []
