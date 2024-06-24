@@ -5,6 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Test MULTITUDINOUS",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "tools/test.py",
+            "console": "integratedTerminal",
+            "args": ""
+        },
+        {
             "name": "Train MULTITUDINOUS",
             "type": "debugpy",
             "request": "launch",
@@ -18,7 +26,7 @@
             "request": "launch",
             "program": "tools/img_pretrain.py",
             "console": "integratedTerminal",
-            "args": "--config multitudinous/configs/pretraining/se_resnet_unet.yaml --dataset multitudinous/configs/datasets/carla.yaml --output weights/img_pretrain"
+            "args": "--config multitudinous/configs/pretraining/img/se_resnet50_unet.yaml --dataset multitudinous/configs/datasets/carla_rgbd.yaml --output weights/img_pretrain"
         },
         {
             "name": "Pre-train NDT-Net",

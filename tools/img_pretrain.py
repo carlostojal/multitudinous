@@ -46,7 +46,7 @@ if __name__ == "__main__":
     print("Loading dataset...", end=" ")
     dataset_conf: DatasetConfig = DatasetConfig()
     dataset_conf.parse_from_file(args.dataset)
-    train_set, val_set, test_set = build_dataset(dataset_conf.name, dataset_conf.base_path, dataset_conf.train_path, dataset_conf.val_path, dataset_conf.test_path)
+    train_set, val_set, test_set = build_dataset(dataset_conf)
     print("done.")
 
     # create the dataloader

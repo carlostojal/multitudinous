@@ -42,5 +42,7 @@ class DatasetConfig(Config):
                 self.n_pcl_classes = conf['n_pcl_classes']
 
             # camera specific
-            if 'img_shape' in conf:
-                self.img_shape = conf['img_shape']
+            if 'img_width' in conf:
+                self.img_width = conf['img_width']
+            if 'img_height' in conf:
+                self.img_height = conf['img_height']

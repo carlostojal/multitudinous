@@ -54,7 +54,6 @@ class ImgPreTrainingConfig:
             self.learning_rate = conf['learning_rate']
             self.momentum = conf['momentum']
             self.loss_fn = conf['loss_fn']
-            self.num_classes = conf['num_classes']
 
             self.encoder = EncoderConfig()
             self.encoder.name = conf['encoder']['name']
