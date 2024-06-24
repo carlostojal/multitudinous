@@ -1,0 +1,7 @@
+name: carla_rgbd
+base_path: ../data/DataSet_5296
+train_path: train
+val_path: validation
+test_path: test
+img_width: 1280
+img_height: 704
