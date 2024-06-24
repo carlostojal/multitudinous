@@ -1,5 +1,5 @@
 name: 'se_resnet50_unet'
-batch_size: 1
+batch_size: 16
 optimizer: 'adam'
 epochs: 15
 train_percent: 0.7
