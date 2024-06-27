@@ -83,14 +83,11 @@ if __name__ == "__main__":
 
     # initialize wandb
     print("Initializing loggers...", end=" ")
-    """
     wandb.init(
         project='img_pretrainer',
         name=f"{config.name}_{datetime.datetime.now().strftime('%H:%M:%S_%Y-%m-%d')}",
         config=config.__dict__
     )
-    writer = SummaryWriter(f"runs/img_pretraniner/{config.name}_{datetime.datetime.now().strftime('%H:%M:%S_%Y-%m-%d')}")
-    """
     print("done.")
 
     # load the dataset
@@ -179,7 +176,5 @@ if __name__ == "__main__":
 
     # finish logging
     wandb.finish()
-    writer.flush()
-    writer.close()
 
     print("done.")
