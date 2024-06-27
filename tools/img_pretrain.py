@@ -132,6 +132,8 @@ if __name__ == "__main__":
     # train the model
     for epoch in range(config.epochs):
 
+        print(f"Epoch {epoch+1}/{config.epochs}")
+
         # run one training epoch
         train_loss, train_loss_mean = run_one_epoch(img_pretrainer, optim, train_loader, device, config, "train")
 
@@ -162,6 +164,9 @@ if __name__ == "__main__":
         torch.save(img_pretrainer.encoder.state_dict(), backbone_path)
         print("done.")
 
+
+    print("Testing the model...")
+    
     # test the model
     test_loss, test_loss_mean = run_one_epoch(img_pretrainer, optim, test_loader, device, config, "test")
 
