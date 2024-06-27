@@ -2,10 +2,10 @@ import sys
 import os
 import torch
 from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
 import argparse
 import datetime
 import wandb
+from typing import Tuple
 sys.path.append(".")
 from multitudinous.utils.model_builder import build_img_pretraining
 from multitudinous.utils.dataset_builder import build_dataset
@@ -13,6 +13,55 @@ from multitudinous.utils.loss_builder import build_loss_fn
 from multitudinous.configs.pretraining.ImgPreTrainingConfig import ImgPreTrainingConfig
 from multitudinous.configs.datasets.DatasetConfig import DatasetConfig
 from multitudinous.loss_fns import rmse, rel, delta
+
+def run_one_epoch(model: torch.nn.Module, optimizer: torch.optim.Optimizer, loader: DataLoader, device: torch.device, config: ImgPreTrainingConfig = None, mode: str = "train") -> Tuple[float, float]:
+
+    if mode == "train":
+        model.train()
+    else:
+        model.eval()
+
+    criterion = torch.nn.MSELoss(reduction='mean')
+
+    curr_sample = 0
+    loss_total = 0.0
+
+    for rgb, depth in loader:
+
+        # zero the gradients for each batch
+        optimizer.zero_grad()
+
+        # build the rgbd image
+        rgb = rgb.to(device)
+        depth = depth.to(device)
+        depth = depth.unsqueeze(1)
+        rgbd = torch.cat((rgb, depth), dim=1)
+
+        # forward pass
+        pred_depth = model(rgbd)
+
+        # compute the loss
+        loss = torch.sqrt(criterion(pred_depth, depth))
+
+        # accumulate the loss
+        loss_total += loss.item()
+
+        # compute the gradients
+        if mode == "train":
+            loss.backward()
+
+            # adjust the weights
+            optimizer.step()
+
+        curr_sample += config.batch_size
+
+        # log the batch loss
+        print(f"\r{mode} sample {curr_sample}/{len(loader)*config.batch_size}, Loss: {loss.item()}", end=" ")
+
+    print()
+
+    # return the last loss and the mean loss
+    return loss.item(), loss_total / float(len(loader)*config.batch_size)
 
 if __name__ == "__main__":
 
@@ -34,12 +83,14 @@ if __name__ == "__main__":
 
     # initialize wandb
     print("Initializing loggers...", end=" ")
+    """
     wandb.init(
         project='img_pretrainer',
         name=f"{config.name}_{datetime.datetime.now().strftime('%H:%M:%S_%Y-%m-%d')}",
         config=config.__dict__
     )
     writer = SummaryWriter(f"runs/img_pretraniner/{config.name}_{datetime.datetime.now().strftime('%H:%M:%S_%Y-%m-%d')}")
+    """
     print("done.")
 
     # load the dataset
@@ -84,163 +135,25 @@ if __name__ == "__main__":
     # train the model
     for epoch in range(config.epochs):
 
-        # set the model to training mode
-        img_pretrainer.train(True)
+        # run one training epoch
+        train_loss, train_loss_mean = run_one_epoch(img_pretrainer, optim, train_loader, device, config, "train")
 
-        curr_sample = 0
-
-        loss_epoch_total = 0
-        rmse_epoch_total = 0
-
-        # iterate samples
-        for rgb, depth in train_loader:
-
-            # zero the gradients for each batch
-            optim.zero_grad()
-
-            # build the rgb-d image
-            rgb = rgb.to(device)
-            depth = depth.to(device)
-            depth = depth.unsqueeze(1)
-            rgbd = torch.cat((rgb, depth), dim=1)
-
-            # forward pass
-            pred_depth = img_pretrainer(rgbd)
-
-            train_loss_total = 0
-            rmse_total = 0
-            rel_total = 0
-            delta1_total = 0
-            delta2_total = 0
-            delta3_total = 0
-
-            # compute the loss
-            for i in range(pred_depth.shape[0]): # batch size
-                train_loss_total += loss_fn(pred_depth[i], depth[i])
-                rmse_total += rmse(pred_depth[i], depth[i])
-                rel_total += rel(pred_depth[i], depth[i])
-                delta1_total += delta(pred_depth[i], depth[i], 1)
-                delta2_total += delta(pred_depth[i], depth[i], 2)
-                delta3_total += delta(pred_depth[i], depth[i], 3)
-
-                curr_sample += 1
-
-            train_loss = train_loss_total / pred_depth.shape[0]
-            rmse_loss = rmse_total / pred_depth.shape[0]
-            rel_loss = rel_total / pred_depth.shape[0]
-            delta1_loss = delta1_total / pred_depth.shape[0]
-            delta2_loss = delta2_total / pred_depth.shape[0]
-            delta3_loss = delta3_total / pred_depth.shape[0]
-
-            loss_epoch_total += train_loss.item()
-            rmse_epoch_total += rmse_loss.item()
-
-            del rgb, depth, rgbd, pred_depth
-
-            # compute the gradients
-            train_loss.backward()
-
-            # adjust the weights
-            optim.step()
-
-            print(f"\rEpoch {epoch+1}/{config.epochs}, Sample {curr_sample}/{train_len*config.batch_size}, Train Loss: {train_loss.item()}, RMSE: {rmse_loss.item()}", end=" ")
-
-        print()
-
+        # log training losses
         wandb.log({
             'epoch': epoch+1,
-            'train_loss': train_loss.item(),
-            'train_loss_mean': loss_epoch_total / float(train_len*config.batch_size),
-            'rmse': rmse_loss.item(),
-            'rmse_mean': rmse_epoch_total / float(train_len*config.batch_size),
-            'rel': rel_loss.item(),
-            'delta1': delta1_loss.item(),
-            'delta2': delta2_loss.item(),
-            'delta3': delta3_loss.item()
+            'train_loss': train_loss,
+            'train_loss_mean': train_loss_mean
         })
-        writer.add_scalar('Loss/train', train_loss.item(), epoch)
-        writer.add_scalar('RMSE/train', rmse_loss.item(), epoch)
-        writer.add_scalar('REL/train', rel_loss.item(), epoch)
-        writer.add_scalar('Delta1/train', delta1_loss.item(), epoch)
-        writer.add_scalar('Delta2/train', delta2_loss.item(), epoch)
-        writer.add_scalar('Delta3/train', delta3_loss.item(), epoch)
 
-        del train_loss_total, rmse_total, rel_total, delta1_total, delta2_total, delta3_total
-        del train_loss, rmse_loss, rel_loss, delta1_loss, delta2_loss, delta3_loss
-        
-        # set the model to evaluation mode
-        img_pretrainer.eval()
+        # run one validation epoch
+        val_loss, val_loss_mean = run_one_epoch(img_pretrainer, optim, val_loader, device, config, "val")
 
-        # evaluate the model
-
-        curr_sample = 0
-        loss_epoch_total = 0
-        rmse_epoch_total = 0
-        for rgb, depth in val_loader:
-
-            # build the rgb-d image
-            rgb = rgb.to(device)
-            depth = depth.to(device)
-            depth = depth.unsqueeze(1)
-            rgbd = torch.cat((rgb, depth), dim=1)
-
-            # forward pass
-            pred_depth = img_pretrainer(rgbd)
-
-            val_loss_total = 0
-            rmse_total = 0
-            rel_total = 0
-            delta1_total = 0
-            delta2_total = 0
-            delta3_total = 0
-
-            # compute the loss
-            for i in range(pred_depth.shape[0]): # batch size
-                val_loss_total += loss_fn(pred_depth[i], depth[i])
-                rmse_total += rmse(pred_depth[i], depth[i])
-                rel_total += rel(pred_depth[i], depth[i])
-                delta1_total += delta(pred_depth[i], depth[i], 1)
-                delta2_total += delta(pred_depth[i], depth[i], 2)
-                delta3_total += delta(pred_depth[i], depth[i], 3)
-
-                curr_sample += 1
-            
-            val_loss = val_loss_total / pred_depth.shape[0]
-            rmse_loss = rmse_total / pred_depth.shape[0]
-            rel_loss = rel_total / pred_depth.shape[0]
-            delta1_loss = delta1_total / pred_depth.shape[0]
-            delta2_loss = delta2_total / pred_depth.shape[0]
-            delta3_loss = delta3_total / pred_depth.shape[0]
-
-            loss_epoch_total += val_loss.item()
-            rmse_epoch_total += rmse_loss.item()
-
-            del rgb, depth, rgbd, pred_depth
-
-            print(f"\rEpoch {epoch+1}/{config.epochs}, Sample {curr_sample}/{val_len*config.batch_size}, Val Loss: {val_loss.item()}, RMSE: {rmse_loss.item()}", end=" ")
-
-        print()
-
+        # log validation losses
         wandb.log({
             'epoch': epoch+1,
-            'val_loss': val_loss.item(),
-            'val_loss_mean': loss_epoch_total / float(val_len*config.batch_size),
-            'rmse': rmse_loss.item(),
-            'rmse_mean': rmse_epoch_total / float(val_len*config.batch_size),
-            'rel': rel_loss.item(),
-            'delta1': delta1_loss.item(),
-            'delta2': delta2_loss.item(),
-            'delta3': delta3_loss.item()
+            'val_loss': val_loss,
+            'val_loss_mean': val_loss_mean
         })
-        writer.add_scalar('Loss/val', val_loss.item(), epoch)
-        writer.add_scalar('RMSE/val', rmse_loss.item(), epoch)
-        writer.add_scalar('REL/val', rel_loss.item(), epoch)
-        writer.add_scalar('Delta1/val', delta1_loss.item(), epoch)
-        writer.add_scalar('Delta2/val', delta2_loss.item(), epoch)
-        writer.add_scalar('Delta3/val', delta3_loss.item(), epoch)
-
-        del val_loss_total, rmse_total, rel_total, delta1_total, delta2_total, delta3_total
-        del val_loss, rmse_loss, rel_loss, delta1_loss, delta2_loss, delta3_loss
 
         # save the model
         print("Saving the model...", end=" ")
@@ -252,77 +165,15 @@ if __name__ == "__main__":
         torch.save(img_pretrainer.encoder.state_dict(), backbone_path)
         print("done.")
 
-
-    curr_sample = 0
-    loss_epoch_total = 0
-    rmse_epoch_total = 0
-
     # test the model
-    print("Testing the model...", end=" ")
-    for rgb, depth in test_loader:
+    test_loss, test_loss_mean = run_one_epoch(img_pretrainer, optim, test_loader, device, config, "test")
 
-        # build the rgb-d image
-        rgb = rgb.to(device)
-        depth = depth.to(device)
-        depth = depth.unsqueeze(1)
-        rgbd = torch.cat((rgb, depth), dim=1)
-
-        # forward pass
-        pred_depth = img_pretrainer(rgbd)
-
-        test_loss_total = 0
-        rmse_total = 0
-        rel_total = 0
-        delta1_total = 0
-        delta2_total = 0
-        delta3_total = 0
-        curr_sample = 0
-
-        # compute the loss
-        for i in range(pred_depth.shape[0]): # batch size
-            test_loss_total += loss_fn(pred_depth[i], depth[i])
-            rmse_total += rmse(pred_depth[i], depth[i])
-            rel_total += rel(pred_depth[i], depth[i])
-            delta1_total += delta(pred_depth[i], depth[i], 1)
-            delta2_total += delta(pred_depth[i], depth[i], 2)
-            delta3_total += delta(pred_depth[i], depth[i], 3)
-
-            curr_sample += 1
-
-        test_loss = test_loss_total / pred_depth.shape[0]
-        rmse_loss = rmse_total / pred_depth.shape[0]
-        rel_loss = rel_total / pred_depth.shape[0]
-        delta1_loss = delta1_total / pred_depth.shape[0]
-        delta2_loss = delta2_total / pred_depth.shape[0]
-        delta3_loss = delta3_total / pred_depth.shape[0]
-
-        loss_epoch_total += test_loss.item()
-        rmse_epoch_total += rmse_loss.item()
-
-        print(f"\rTesting sample {curr_sample}/{test_len*config.batch_size}, Test Loss: {test_loss.item()}, RMSE: {rmse_loss.item()}", end=" ")
-
-    print()
-
+    # log test losses
     wandb.log({
         'epoch': epoch+1,
-        'test_loss': test_loss.item(),
-        'test_loss_mean': loss_epoch_total / float(test_len*config.batch_size),
-        'rmse': rmse_loss.item(),
-        'rmse_mean': rmse_epoch_total / float(test_len*config.batch_size),
-        'rel': rel_loss.item(),
-        'delta1': delta1_loss.item(),
-        'delta2': delta2_loss.item(),
-        'delta3': delta3_loss.item()
+        'test_loss': test_loss,
+        'test_loss_mean': test_loss_mean
     })
-    writer.add_scalar('Loss/test', test_loss.item(), epoch)
-    writer.add_scalar('RMSE/test', rmse_loss.item(), epoch)
-    writer.add_scalar('REL/test', rel_loss.item(), epoch)
-    writer.add_scalar('Delta1/test', delta1_loss.item(), epoch)
-    writer.add_scalar('Delta2/test', delta2_loss.item(), epoch)
-    writer.add_scalar('Delta3/test', delta3_loss.item(), epoch)
-
-    del test_loss_total, rmse_total, rel_total, delta1_total, delta2_total, delta3_total
-    del test_loss, rmse_loss, rel_loss, delta1_loss, delta2_loss, delta3_loss
 
     print("End time: ", datetime.datetime.now().strftime("%H:%M:%S %Y-%m-%d"))
 
@@ -332,4 +183,3 @@ if __name__ == "__main__":
     writer.close()
 
     print("done.")
-

@@ -63,4 +63,3 @@ class ImgPreTrainingConfig:
             self.encoder.with_dropout = conf['encoder']['with_dropout']
         
             self.decoder = DecoderConfig()
-            self.decoder.attention = conf['decoder']['attention']
