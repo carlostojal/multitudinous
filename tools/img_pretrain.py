@@ -1,5 +1,11 @@
 import sys
 import os
+import torch
+from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
+import argparse
+import datetime
+import wandb
 sys.path.append(".")
 from multitudinous.utils.model_builder import build_img_pretraining
 from multitudinous.utils.dataset_builder import build_dataset
@@ -7,12 +13,6 @@ from multitudinous.utils.loss_builder import build_loss_fn
 from multitudinous.configs.pretraining.ImgPreTrainingConfig import ImgPreTrainingConfig
 from multitudinous.configs.datasets.DatasetConfig import DatasetConfig
 from multitudinous.loss_fns import rmse, rel, delta
-import torch
-from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
-import argparse
-import datetime
-import wandb
 
 if __name__ == "__main__":
 
@@ -89,6 +89,9 @@ if __name__ == "__main__":
 
         curr_sample = 0
 
+        loss_epoch_total = 0
+        rmse_epoch_total = 0
+
         # iterate samples
         for rgb, depth in train_loader:
 
@@ -129,6 +132,9 @@ if __name__ == "__main__":
             delta2_loss = delta2_total / pred_depth.shape[0]
             delta3_loss = delta3_total / pred_depth.shape[0]
 
+            loss_epoch_total += train_loss.item()
+            rmse_epoch_total += rmse_loss.item()
+
             del rgb, depth, rgbd, pred_depth
 
             # compute the gradients
@@ -137,14 +143,16 @@ if __name__ == "__main__":
             # adjust the weights
             optim.step()
 
-            print(f"\rEpoch {epoch+1}/{config.epochs}, Sample {curr_sample}/{train_len}, Train Loss: {train_loss.item()}", end=" ")
+            print(f"\rEpoch {epoch+1}/{config.epochs}, Sample {curr_sample}/{train_len*config.batch_size}, Train Loss: {train_loss.item()}, RMSE: {rmse_loss.item()}", end=" ")
 
         print()
 
         wandb.log({
             'epoch': epoch+1,
             'train_loss': train_loss.item(),
+            'train_loss_mean': loss_epoch_total / float(train_len*config.batch_size),
             'rmse': rmse_loss.item(),
+            'rmse_mean': rmse_epoch_total / float(train_len*config.batch_size),
             'rel': rel_loss.item(),
             'delta1': delta1_loss.item(),
             'delta2': delta2_loss.item(),
@@ -166,6 +174,8 @@ if __name__ == "__main__":
         # evaluate the model
 
         curr_sample = 0
+        loss_epoch_total = 0
+        rmse_epoch_total = 0
         for rgb, depth in val_loader:
 
             # build the rgb-d image
@@ -202,16 +212,21 @@ if __name__ == "__main__":
             delta2_loss = delta2_total / pred_depth.shape[0]
             delta3_loss = delta3_total / pred_depth.shape[0]
 
+            loss_epoch_total += val_loss.item()
+            rmse_epoch_total += rmse_loss.item()
+
             del rgb, depth, rgbd, pred_depth
 
-            print(f"\rEpoch {epoch+1}/{config.epochs}, Sample {curr_sample}/{val_len}, Val Loss: {val_loss.item()}", end=" ")
+            print(f"\rEpoch {epoch+1}/{config.epochs}, Sample {curr_sample}/{val_len*config.batch_size}, Val Loss: {val_loss.item()}, RMSE: {rmse_loss.item()}", end=" ")
 
         print()
 
         wandb.log({
             'epoch': epoch+1,
             'val_loss': val_loss.item(),
+            'val_loss_mean': loss_epoch_total / float(val_len*config.batch_size),
             'rmse': rmse_loss.item(),
+            'rmse_mean': rmse_epoch_total / float(val_len*config.batch_size),
             'rel': rel_loss.item(),
             'delta1': delta1_loss.item(),
             'delta2': delta2_loss.item(),
@@ -239,6 +254,8 @@ if __name__ == "__main__":
 
 
     curr_sample = 0
+    loss_epoch_total = 0
+    rmse_epoch_total = 0
 
     # test the model
     print("Testing the model...", end=" ")
@@ -279,14 +296,19 @@ if __name__ == "__main__":
         delta2_loss = delta2_total / pred_depth.shape[0]
         delta3_loss = delta3_total / pred_depth.shape[0]
 
-        print(f"\rTesting sample {curr_sample}/{test_len}, Test Loss: {test_loss.item()}", end=" ")
+        loss_epoch_total += test_loss.item()
+        rmse_epoch_total += rmse_loss.item()
+
+        print(f"\rTesting sample {curr_sample}/{test_len*config.batch_size}, Test Loss: {test_loss.item()}, RMSE: {rmse_loss.item()}", end=" ")
 
     print()
 
     wandb.log({
         'epoch': epoch+1,
         'test_loss': test_loss.item(),
+        'test_loss_mean': loss_epoch_total / float(test_len*config.batch_size),
         'rmse': rmse_loss.item(),
+        'rmse_mean': rmse_epoch_total / float(test_len*config.batch_size),
         'rel': rel_loss.item(),
         'delta1': delta1_loss.item(),
         'delta2': delta2_loss.item(),
