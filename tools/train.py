@@ -3,6 +3,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from argparse import ArgumentParser
 import sys
+import datetime
 from typing import Tuple
 import wandb
 sys.path.append(".")
@@ -88,16 +89,24 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # parse the config file
+    print("Parsing model configurations...", end=" ")
     config = ModelConfig()
     config.parse_from_file(args.config)
+    print("done.")
 
     print(config)
 
     # build the model
+    print("Building the model...", end=" ")
     model = build_multitudinous(config.img_backbone, config.point_cloud_backbone, config.neck, config.head, args.img_backbone_weights, args.point_cloud_backbone_weights)
+    print("done.")
 
     # initialize wandb
-    wandb.init(project="multitudinous", config=config, name="multitudinous")
+    print("Initializing wandb...", end=" ")
+    wandb.init(project="multitudinous", 
+               name=f"multitudinous_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}",
+               config=config)
+    print("done.")
 
     # transfer the model to the cpu
     model.to(device)
@@ -110,6 +119,8 @@ if __name__ == "__main__":
 
     for epoch in range(config.epochs):
 
+        print(f"*** EPOCH {epoch+1} ***")
+
         # train the model
         train_loss, train_loss_mean, train_acc, train_acc_mean = run_one_epoch(model, optimizer, train_loader, device, epoch, mode="train")
         print()
@@ -119,13 +130,16 @@ if __name__ == "__main__":
         print()
 
         # save the model (and the backbones, neck and head individually)
+        print("Saving the model...")
         torch.save(model.state_dict(), f"{args.output}/multitudinous_{epoch}.pth")
         torch.save(model.img_backbone.state_dict(), f"{args.output}/img_backbone_{epoch}.pth")
         torch.save(model.point_cloud_backbone.state_dict(), f"{args.output}/point_cloud_backbone_{epoch}.pth")
         torch.save(model.neck.state_dict(), f"{args.output}/neck_{epoch}.pth")
         torch.save(model.head.state_dict(), f"{args.output}/head_{epoch}.pth")
+        print("done.")
 
     # test
+    print("*** TESTING ***")
     test_loss, test_loss_mean, test_acc, test_acc_mean = run_one_epoch(model, optimizer, test_loader, device, epoch, mode="test")
     print()
 
