@@ -3,6 +3,8 @@ from torch import nn
 from torch.utils.data import DataLoader
 from argparse import ArgumentParser
 import sys
+from typing import Tuple
+import wandb
 sys.path.append(".")
 
 from multitudinous.utils.model_builder import build_multitudinous
@@ -10,7 +12,7 @@ from multitudinous.configs.model.ModelConfig import ModelConfig
 
 def run_one_epoch(model: nn.Module, optimizer: torch.optim.Optimizer, 
                   loader: DataLoader, device: torch.device,
-                  epoch: int, mode: str="train") -> torch.Tensor:
+                  epoch: int, mode: str="train") -> Tuple[float, float]:
     
     # set the model to train or eval mode
     if mode == "train":
@@ -20,6 +22,7 @@ def run_one_epoch(model: nn.Module, optimizer: torch.optim.Optimizer,
 
     # initialize the loss
     loss_total = 0
+    acc_total = 0
     curr_sample = 0
     for i, (pcl, rgbd, grid) in enumerate(loader):
 
@@ -45,6 +48,10 @@ def run_one_epoch(model: nn.Module, optimizer: torch.optim.Optimizer,
             loss.backward()
             optimizer.step()
 
+        # calculate the accuracy. every voxel with more than 0.5 probability is considered occupied
+        acc = ((out > 0.5) == grid).sum().item() / grid.numel()
+        acc_total += acc
+
         # accumulate the mean loss per sample
         loss_total += loss.item()
 
@@ -52,11 +59,12 @@ def run_one_epoch(model: nn.Module, optimizer: torch.optim.Optimizer,
         curr_sample += loader.batch_size
 
         # print the loss
-        print(f"\r{mode} epoch {epoch+1} ({curr_sample}/{len(loader)*loader.batch_size}): loss: {loss.item()}", end="")
+        print(f"\r{mode} epoch {epoch+1} ({curr_sample}/{len(loader)*loader.batch_size}): loss={loss.item()}, acc={acc}", end="")
 
     avg_loss = loss_total / (len(loader) * loader.batch_size)
+    avg_acc = acc_total / (len(loader) * loader.batch_size)
 
-    return avg_loss
+    return avg_loss, avg_acc
 
 
 # Run the training
@@ -88,9 +96,11 @@ if __name__ == "__main__":
     # build the model
     model = build_multitudinous(config.img_backbone, config.point_cloud_backbone, config.neck, config.head, args.img_backbone_weights, args.point_cloud_backbone_weights)
 
+    # initialize wandb
+    wandb.init(project="multitudinous", config=config, name="multitudinous")
+
     # transfer the model to the cpu
     model.to(device)
-
     print(model)
 
     # initialize the optimizer
