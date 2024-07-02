@@ -6,10 +6,13 @@ from multitudinous.backbones.point_cloud.NDT_Netpp.ndtnetpp.preprocessing.ndtnet
 # Multitudinous implementation
 class Multitudinous(torch.nn.Module):
 
-    def __init__(self, img_backbone: nn.Module, point_cloud_backbone: nn.Module, neck: nn.Module, head: nn.Module, embedding_dim: int = 768) -> None:
+    def __init__(self, img_backbone: nn.Module, point_cloud_backbone: nn.Module, neck: nn.Module, head: nn.Module, embedding_dim: int = 768,
+                 num_point_features: int = 1000, num_img_features: int = 300) -> None:
         super().__init__()
 
         self.embedding_dim = embedding_dim
+        self.num_point_features = num_point_features
+        self.num_img_features = num_img_features
         self.img_backbone = img_backbone
         self.point_cloud_backbone = point_cloud_backbone
         self.neck = neck
@@ -26,7 +29,7 @@ class Multitudinous(torch.nn.Module):
         point_cloud_features = None
 
         # ---- RGBD FEATURE EXTRACTION ----
-        rgbd_features = self.img_backbone(rgbd)
+        _, _, _, _, rgbd_features = self.img_backbone(rgbd)
 
         # flatten the features to (batch_size, n, embedding_dim)
         n_rgbd_features = (rgbd_features.shape[0] * rgbd_features.shape[1] * rgbd_features.shape[2] * rgbd_features.shape[3] // self.embedding_dim) * self.embedding_dim
@@ -36,7 +39,7 @@ class Multitudinous(torch.nn.Module):
         # if NDT-Net, use NDT preprocessing
         if self.point_cloud_backbone.__class__.__name__ == 'NDTNet':
             # apply NDT preprocessing
-            point_cloud, covariances, _ = ndt_preprocessing(point_cloud)
+            point_cloud, covariances, _ = ndt_preprocessing(self.num_point_features, point_cloud)
             point_cloud_features, _ = self.point_cloud_backbone(point_cloud, covariances)
         else:
             point_cloud_features = self.point_cloud_backbone(point_cloud)
