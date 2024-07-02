@@ -6,8 +6,8 @@ from multitudinous.configs.model.ModelConfig import ImgBackboneConfig, PointClou
 from multitudinous.model_zoo.multitudinous import Multitudinous
 
 # ensemble the multitudinous model
-def build_multitudinous(img_backbone: ImgBackboneConfig, point_cloud_backbone: PointCloudBackboneConfig,
-                        neck: NeckConfig, head: HeadConfig,
+def build_multitudinous(img_backbone_conf: ImgBackboneConfig, point_cloud_backbone_conf: PointCloudBackboneConfig,
+                        neck_conf: NeckConfig, head_conf: HeadConfig,
                         img_backbone_weights_path: str = None, point_cloud_backbone_weights_path: str = None,
                         neck_weights_path: str = None, head_weights_path: str = None,
                         embedding_dim: int = 768,
@@ -16,19 +16,23 @@ def build_multitudinous(img_backbone: ImgBackboneConfig, point_cloud_backbone: P
     # TODO: add a task parameter to the model builder
     
     # create the image backbone
-    img_b = build_img_backbone(img_backbone=img_backbone, embedding_dim=embedding_dim, sequence_len=sequence_len, weights_path=img_backbone_weights_path)
+    img_b = build_img_backbone(img_backbone=img_backbone_conf, embedding_dim=embedding_dim, sequence_len=sequence_len, weights_path=img_backbone_weights_path)
 
     # create the point cloud backbone
-    point_cloud_b = build_point_cloud_backbone(point_cloud_backbone=point_cloud_backbone, weights_path=point_cloud_backbone_weights_path)
+    point_cloud_b = build_point_cloud_backbone(point_cloud_backbone=point_cloud_backbone_conf, weights_path=point_cloud_backbone_weights_path)
 
     # create the neck
-    neck = build_neck(neck=neck, embedding_dim=embedding_dim, weights_path=neck_weights_path)
+    neck = build_neck(neck=neck_conf, embedding_dim=embedding_dim, weights_path=neck_weights_path)
 
     # create the head
-    head = build_head(head=head, embedding_dim=embedding_dim, weights_path=head_weights_path)
+    head = build_head(head=head_conf, embedding_dim=embedding_dim, weights_path=head_weights_path)
 
     # create the model
-    model = Multitudinous(img_b, point_cloud_b, neck, head)
+    model = Multitudinous(img_backbone=img_b, 
+                          point_cloud_backbone=point_cloud_b, 
+                          neck=neck, head=head, 
+                          num_point_features=point_cloud_backbone_conf.num_point_features,
+                          num_img_features=img_backbone_conf.num_img_features)
 
     return model
 
