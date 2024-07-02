@@ -1,10 +1,63 @@
 import torch
-import argparse
+from torch import nn
+from torch.utils.data import DataLoader
+from argparse import ArgumentParser
 import sys
 sys.path.append(".")
 
 from multitudinous.utils.model_builder import build_multitudinous
 from multitudinous.configs.model.ModelConfig import ModelConfig
+
+def run_one_epoch(model: nn.Module, optimizer: torch.optim.Optimizer, 
+                  loader: DataLoader, device: torch.device,
+                  epoch: int, mode: str="train") -> torch.Tensor:
+    
+    # set the model to train or eval mode
+    if mode == "train":
+        model.train()
+    else:
+        model.eval()
+
+    # initialize the loss
+    loss_total = 0
+    curr_sample = 0
+    for i, (pcl, rgbd, grid) in enumerate(loader):
+
+        # transfer the data to the device
+        pcl = pcl.to(device)
+        rgbd = rgbd.to(device)
+        grid = grid.to(device)
+
+        # zero the gradients
+        optimizer.zero_grad()
+
+        # forward pass
+        out = model(pcl, rgbd)
+
+        # instantiate the criterion
+        criterion = nn.CrossEntropyLoss(reduction='mean')
+
+        # calculate the loss
+        loss = criterion(out, grid)
+
+        # backpropagation
+        if mode == "train":
+            loss.backward()
+            optimizer.step()
+
+        # accumulate the mean loss per sample
+        loss_total += loss.item()
+
+        # increment the current sample
+        curr_sample += loader.batch_size
+
+        # print the loss
+        print(f"\r{mode} epoch {epoch+1} ({curr_sample}/{len(loader)*loader.batch_size}): loss: {loss.item()}", end="")
+
+    avg_loss = loss_total / (len(loader) * loader.batch_size)
+
+    return avg_loss
+
 
 # Run the training
 
@@ -14,13 +67,16 @@ if __name__ == "__main__":
     device = torch.device("cpu")
     if torch.cuda.is_available():
         device = torch.device("cuda")
+    # set the detected device as default
+    torch.set_default_device(device)
 
     # parse command line arguments
-    parser = argparse.ArgumentParser(description='Train the model')
+    parser = ArgumentParser(description='Train the model')
     parser.add_argument('--config', type=str, default='multitudinous/configs/model/se_resnet50-pointnet.yaml', help='Path to the model YAML configuration file.')
     parser.add_argument('--img_backbone_weights', type=str, default=None, help='Path to the weights of the image backbone')
     parser.add_argument('--point_cloud_backbone_weights', type=str, default=None, help='Path to the weights of the point cloud backbone')
     parser.add_argument('--output', type=str, default='output', help='Path to save the model')
+    parser.add_argument('--save_every', type=int, default=1, help='Save the model every n epochs')
     args = parser.parse_args()
 
     # parse the config file
@@ -37,11 +93,30 @@ if __name__ == "__main__":
 
     print(model)
 
-    # TODO
+    # initialize the optimizer
+    optimizer = torch.optim.Adam(model.parameters(), lr=config.lr)
 
-    # generate random input tensors
-    random_pcl = torch.rand((2, 6000, 3)).to(device)
-    random_rgbd = torch.rand((2, 4, 704, 1280)).to(device)
+    # TODO: load the dataset
 
-    # test forward pass with random tensors (with correct dimensions)
-    out = model(random_pcl, random_rgbd)
+    for epoch in range(config.epochs):
+
+        # train the model
+        train_loss = run_one_epoch(model, optimizer, train_loader, device, epoch, mode="train")
+        print()
+
+        # validation
+        val_loss = run_one_epoch(model, optimizer, val_loader, device, epoch, mode="validation")
+        print()
+
+        # save the model (and the backbones, neck and head individually)
+        torch.save(model.state_dict(), f"{args.output}/multitudinous_{epoch}.pth")
+        torch.save(model.img_backbone.state_dict(), f"{args.output}/img_backbone_{epoch}.pth")
+        torch.save(model.point_cloud_backbone.state_dict(), f"{args.output}/point_cloud_backbone_{epoch}.pth")
+        torch.save(model.neck.state_dict(), f"{args.output}/neck_{epoch}.pth")
+        torch.save(model.head.state_dict(), f"{args.output}/head_{epoch}.pth")
+
+    # test
+    test_loss = run_one_epoch(model, optimizer, test_loader, device, epoch, mode="test")
+    print()
+
+    print("Training complete.")
