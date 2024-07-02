@@ -25,47 +25,31 @@ class Multitudinous(torch.nn.Module):
         rgbd_features = None
         point_cloud_features = None
 
-        # a routine to extract rgbd features
-        def run_img_backbone():
-            nonlocal rgbd_features
-            rgbd_features = self.img_backbone(rgbd)
+        # ---- RGBD FEATURE EXTRACTION ----
+        rgbd_features = self.img_backbone(rgbd)
 
-            # flatten the features to (batch_size, n, embedding_dim)
-            n_rgbd_features = (rgbd_features.shape[0] * rgbd_features.shape[1] * rgbd_features.shape[2] * rgbd_features.shape[3] // self.embedding_dim) * self.embedding_dim
-            rgbd_features = torch.flatten(rgbd_features)[:n_rgbd_features].reshape(rgbd_features.shape[0], -1, self.embedding_dim)
+        # flatten the features to (batch_size, n, embedding_dim)
+        n_rgbd_features = (rgbd_features.shape[0] * rgbd_features.shape[1] * rgbd_features.shape[2] * rgbd_features.shape[3] // self.embedding_dim) * self.embedding_dim
+        rgbd_features = torch.flatten(rgbd_features)[:n_rgbd_features].reshape(rgbd_features.shape[0], -1, self.embedding_dim)
 
-        # a routine to extract point cloud features
-        def run_point_cloud_backbone():
-            nonlocal point_cloud_features
-            # if NDT-Net, use NDT preprocessing
-            if self.point_cloud_backbone.__class__.__name__ == 'NDTNet':
-                # apply NDT preprocessing
-                point_cloud, covariances, _ = ndt_preprocessing(point_cloud)
-                point_cloud_features, _ = self.point_cloud_backbone(point_cloud, covariances)
-            else:
-                point_cloud_features = self.point_cloud_backbone(point_cloud)
+        # ---- POINT CLOUD FEATURE EXTRACTION ----
+        # if NDT-Net, use NDT preprocessing
+        if self.point_cloud_backbone.__class__.__name__ == 'NDTNet':
+            # apply NDT preprocessing
+            point_cloud, covariances, _ = ndt_preprocessing(point_cloud)
+            point_cloud_features, _ = self.point_cloud_backbone(point_cloud, covariances)
+        else:
+            point_cloud_features = self.point_cloud_backbone(point_cloud)
 
-            # flatten the features to (batch_size, n, embedding_dim)
-            n_point_cloud_features = (point_cloud_features.shape[0] * point_cloud_features.shape[1] * point_cloud_features.shape[2] // self.embedding_dim) * self.embedding_dim
-            point_cloud_features = torch.flatten(point_cloud_features)[:n_point_cloud_features].reshape(point_cloud_features.shape[0], -1, self.embedding_dim)
+        # flatten the features to (batch_size, n, embedding_dim)
+        n_point_cloud_features = (point_cloud_features.shape[0] * point_cloud_features.shape[1] * point_cloud_features.shape[2] // self.embedding_dim) * self.embedding_dim
+        point_cloud_features = torch.flatten(point_cloud_features)[:n_point_cloud_features].reshape(point_cloud_features.shape[0], -1, self.embedding_dim)
 
         """
-        # create a thread to extract point cloud features and another to extract rgbd features
-        rgbd_thread = Thread(target=run_img_backbone)
-        point_cloud_thread = Thread(target=run_point_cloud_backbone)
-
-        # start the threads concurrently
-        rgbd_thread.start()
-        point_cloud_thread.start()
-
-        # wait for the threads
-        rgbd_thread.join()
-        point_cloud_thread.join()
-        """
-
         # TODO: remove this after testing
         point_cloud_features = torch.rand((1, 1000, 768)).to(self.device)
-        rgbd_features = torch.rand((1, 880, 768)).to(self.device)
+        rgbd_features = torch.rand((1, 300, 768)).to(self.device)
+        """
 
         # fuse the features using the neck
         rgbd_embeddings, point_cloud_embeddings = self.neck(point_cloud_features, rgbd_features)
