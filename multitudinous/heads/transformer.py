@@ -1,6 +1,9 @@
 import torch
 from torch import nn
 from multitudinous.tasks import Task
+from typing import Tuple
+from math import ceil
+import numpy as np
 
 class TransformerHead(nn.Module):
 
@@ -15,15 +18,20 @@ class TransformerHead(nn.Module):
         For generalized 3-dimensional environment perception.
         """
 
-        def __init__(self, embedding_dim: int = 768) -> None:
+        def __init__(self, embedding_dim: int = 768, seq_len: int = 876, output_shape: Tuple[int] = (200, 200, 16)) -> None:
             super().__init__()
 
-            # TODO: have considerations on the kernel size and stride considering the hidden dimension and desired voxel grid size (e.g. 32x32x32)
+            self.embedding_dim = embedding_dim
+            self.seq_len = seq_len
+            self.output_shape = output_shape
 
-            # initialize the deconv3d layers
-            self.deconv1 = nn.ConvTranspose3d(embedding_dim, embedding_dim // 2, kernel_size=3, stride=2, padding=1)
-            self.deconv2 = nn.ConvTranspose3d(embedding_dim // 2, embedding_dim // 4, kernel_size=3, stride=2, padding=1)
-            self.deconv3 = nn.ConvTranspose3d(embedding_dim // 4, 1, kernel_size=3, stride=2, padding=1)
+            self.conv3d = nn.Sequential(
+                nn.Conv3d(1, 16, kernel_size=(1,4,2), stride=2, padding=0),
+                nn.ReLU(),
+                nn.Conv3d(16, 32, kernel_size=(1,4,2), stride=2, padding=0),
+                nn.ReLU(),
+                nn.Conv3d(32, 16, kernel_size=(1,3,2), stride=1, padding=0)
+            )
 
 
         def forward(self, embeddings: torch.Tensor) -> torch.Tensor:
@@ -37,12 +45,22 @@ class TransformerHead(nn.Module):
             - torch.Tensor: the voxel grid
             """
 
-            # apply the deconv3d layers
-            grid = self.deconv1(embeddings)
-            grid = self.deconv2(grid)
-            grid = self.deconv3(grid)
+            # add two dimensions to the embeddings
+            x = embeddings.unsqueeze(1).unsqueeze(1)
 
-            return grid
+            # TODO: apply the conv3d layers
+            x = self.conv3d(x) # (B, 16, 1, 216, 190)
+
+            # swap the channels to the end
+            x = x.permute(0, 2, 3, 4, 1)
+
+            # interpolate the output to the desired shape
+            x = nn.functional.interpolate(x, size=self.output_shape, mode='trilinear')
+
+            # remove the channel dimension
+            x = x.squeeze(1)
+
+            return x
         
     class ConesDecoder(nn.Module):
 
