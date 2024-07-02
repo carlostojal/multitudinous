@@ -4,27 +4,29 @@ from typing import Tuple
 
 class ImgBackboneConfig:
     def __init__(self, name: str = None, weights_path: str = None, in_channels: int = None,
-                 img_width: int = None, img_height: int = None) -> None:
+                 img_width: int = None, num_img_features: int = None, img_height: int = None) -> None:
         self.name = name
         self.weights_path = weights_path
         self.in_channels = in_channels
         self.img_width = img_width
         self.img_height = img_height
+        self.num_img_features = num_img_features
     
     def __str__(self) -> str:
-        return f"ImgBackboneConfig(name={self.name}, weights_path={self.weights_path}, in_channels={self.in_channels}, img_width={self.img_width}, img_height={self.img_height})"
+        return f"ImgBackboneConfig(name={self.name}, weights_path={self.weights_path}, in_channels={self.in_channels}, img_width={self.img_width}, img_height={self.img_height}, num_img_features={self.num_img_features})"
 
 class PointCloudBackboneConfig:
     def __init__(self, name: str = None, weights_path: str = None, point_dim: int = None,
-                 num_points: int = None, feature_dim: int = None) -> None:
+                 num_points: int = None, num_point_features: int = None, feature_dim: int = None) -> None:
         self.name = name
         self.weights_path = weights_path
         self.point_dim = point_dim
         self.num_points = num_points
+        self.num_point_features = num_point_features
         self.feature_dim = feature_dim
 
     def __str__(self) -> str:
-        return f"PointCloudBackboneConfig(name={self.name}, weights_path={self.weights_path}, point_dim={self.point_dim}, num_points={self.num_points}, feature_dim={self.feature_dim})"
+        return f"PointCloudBackboneConfig(name={self.name}, weights_path={self.weights_path}, point_dim={self.point_dim}, num_points={self.num_points}, num_point_features={self.num_point_features}, feature_dim={self.feature_dim})"
 
 class NeckConfig:
     def __init__(self, name: str = None, weights_path: str = None) -> None:
@@ -79,12 +81,14 @@ class ModelConfig(Config):
             self.img_backbone.in_channels = conf['img_backbone']['in_channels']
             self.img_backbone.img_width = conf['img_backbone']['img_width']
             self.img_backbone.img_height = conf['img_backbone']['img_height']
+            self.img_backbone.num_img_features = conf['img_backbone']['num_img_features']
 
             self.point_cloud_backbone: PointCloudBackboneConfig = PointCloudBackboneConfig()
             self.point_cloud_backbone.name = conf['point_cloud_backbone']['name']
             self.point_cloud_backbone.num_points = conf['point_cloud_backbone']['num_points']
             self.point_cloud_backbone.point_dim = conf['point_cloud_backbone']['point_dim']
             self.point_cloud_backbone.feature_dim = conf['point_cloud_backbone']['feature_dim']
+            self.point_cloud_backbone.num_point_features = conf['point_cloud_backbone']['num_point_features']
 
             self.neck: NeckConfig = NeckConfig()
             self.neck.name = conf['neck']['name']
