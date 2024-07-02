@@ -12,7 +12,7 @@ from multitudinous.configs.model.ModelConfig import ModelConfig
 
 def run_one_epoch(model: nn.Module, optimizer: torch.optim.Optimizer, 
                   loader: DataLoader, device: torch.device,
-                  epoch: int, mode: str="train") -> Tuple[float, float]:
+                  epoch: int, mode: str="train") -> Tuple[float, float, float, float]:
     
     # set the model to train or eval mode
     if mode == "train":
@@ -64,7 +64,7 @@ def run_one_epoch(model: nn.Module, optimizer: torch.optim.Optimizer,
     avg_loss = loss_total / (len(loader) * loader.batch_size)
     avg_acc = acc_total / (len(loader) * loader.batch_size)
 
-    return avg_loss, avg_acc
+    return loss.item(), avg_loss, acc, avg_acc
 
 
 # Run the training
@@ -111,11 +111,11 @@ if __name__ == "__main__":
     for epoch in range(config.epochs):
 
         # train the model
-        train_loss = run_one_epoch(model, optimizer, train_loader, device, epoch, mode="train")
+        train_loss, train_loss_mean, train_acc, train_acc_mean = run_one_epoch(model, optimizer, train_loader, device, epoch, mode="train")
         print()
 
         # validation
-        val_loss = run_one_epoch(model, optimizer, val_loader, device, epoch, mode="validation")
+        val_loss, val_loss_mean, val_acc, val_acc_mean = run_one_epoch(model, optimizer, val_loader, device, epoch, mode="validation")
         print()
 
         # save the model (and the backbones, neck and head individually)
@@ -126,7 +126,7 @@ if __name__ == "__main__":
         torch.save(model.head.state_dict(), f"{args.output}/head_{epoch}.pth")
 
     # test
-    test_loss = run_one_epoch(model, optimizer, test_loader, device, epoch, mode="test")
+    test_loss, test_loss_mean, test_acc, test_acc_mean = run_one_epoch(model, optimizer, test_loader, device, epoch, mode="test")
     print()
 
     print("Training complete.")
