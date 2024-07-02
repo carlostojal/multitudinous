@@ -16,7 +16,7 @@
             "name": "Train MULTITUDINOUS",
             "type": "debugpy",
             "request": "launch",
-            "program": "tools/train.py",
+            "program": "tools/train.py --config multitudinous/configs/model/se_resnet50-ndtnet.yaml",
             "console": "integratedTerminal",
             "args": ""
         },
