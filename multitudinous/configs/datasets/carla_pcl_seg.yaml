@@ -3,5 +3,5 @@ base_path: ../data/PCL_Segmentation_1000_fixed
 train_path: train
 val_path: validation
 test_path: test
-min_points_threshold: 84500
+num_points: 84500
 n_pcl_classes: 28
