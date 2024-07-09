@@ -83,7 +83,7 @@ if __name__ == "__main__":
 
     # parse command line arguments
     parser = ArgumentParser(description='Train the model')
-    parser.add_argument('--config', type=str, default='multitudinous/configs/model/se_resnet50-pointnet.yaml', help='Path to the model YAML configuration file.')
+    parser.add_argument('--config', type=str, default='multitudinous/configs/model/se_resnet50-ndtnet.yaml', help='Path to the model YAML configuration file.')
     parser.add_argument('--img_backbone_weights', type=str, default=None, help='Path to the weights of the image backbone')
     parser.add_argument('--point_cloud_backbone_weights', type=str, default=None, help='Path to the weights of the point cloud backbone')
     parser.add_argument('--output', type=str, default='output', help='Path to save the model')
