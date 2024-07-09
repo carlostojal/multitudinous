@@ -7,10 +7,10 @@ class ViT_Embedding(torch.nn.Module):
 
     Args:
     - patch_size (int): the size of the patch
-    - feature_dim (torch.Size): the dimension of the input feature map
-    - embedding_dim (int): the dimension of the embedding
+    - embedding_dim (int): the embedding dimension to project the feature map to
+    - in_channels (int): the number of channels of the input feature map
     """
-    def __init__(self, patch_size: int = 1, embedding_dim: int = 768, feature_dim: torch.Size = torch.Size((1, 2048, 15, 20))) -> None:
+    def __init__(self, patch_size: int = 1, embedding_dim: int = 768, in_channels: int = 2048) -> None:
         super().__init__()
         
         # initialize the patch size
@@ -24,10 +24,10 @@ class ViT_Embedding(torch.nn.Module):
             raise ValueError("Embedding dimension should be greater or equal to 1")
         
         # initialize the feature dimension
-        self.feature_dim = feature_dim
+        self.in_channels = in_channels
         
         # initialize the convolutional layer
-        self.conv = nn.Conv2d(in_channels=self.feature_dim[1], out_channels=self.embedding_dim, kernel_size=self.patch_size, stride=self.patch_size)
+        self.conv = nn.Conv2d(in_channels=self.in_channels, out_channels=self.embedding_dim, kernel_size=self.patch_size, stride=self.patch_size)
         
 
 
@@ -44,10 +44,6 @@ class ViT_Embedding(torch.nn.Module):
 
         # batch size, channels, height, width
         n, c, h, w = x.shape
-
-        # verify the input tensor shape
-        if x.shape != self.feature_dim:
-            raise ValueError(f"Input tensor shape should be {self.feature_dim}, but got {x.shape}")
 
         # calculate the number of patches in the height and width
         n_h = h // self.patch_size
