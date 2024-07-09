@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from threading import Thread
 from multitudinous.backbones.point_cloud.NDT_Netpp.ndtnetpp.preprocessing.ndtnet_preprocessing import ndt_preprocessing
+from multitudinous.backbones.image.vit_embedding import ViT_Embedding
 
 # Multitudinous implementation
 class Multitudinous(torch.nn.Module):
@@ -18,6 +19,8 @@ class Multitudinous(torch.nn.Module):
         self.neck = neck
         self.head = head
 
+        self.img_embedder = ViT_Embedding(patch_size=1, embedding_dim=self.embedding_dim, in_channels=2048)
+
         # check if the model is on the GPU
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -31,9 +34,15 @@ class Multitudinous(torch.nn.Module):
         # ---- RGBD FEATURE EXTRACTION ----
         _, _, _, _, rgbd_features = self.img_backbone(rgbd)
 
+        # ViT embedding on the RGBD features
+        rgbd_features = self.img_embedder(rgbd_features)
+
+
+        """
         # flatten the features to (batch_size, n, embedding_dim)
         n_rgbd_features = (rgbd_features.shape[0] * rgbd_features.shape[1] * rgbd_features.shape[2] * rgbd_features.shape[3] // self.embedding_dim) * self.embedding_dim
         rgbd_features = torch.flatten(rgbd_features)[:n_rgbd_features].reshape(rgbd_features.shape[0], -1, self.embedding_dim)
+        """
 
         # ---- POINT CLOUD FEATURE EXTRACTION ----
         # if NDT-Net, use NDT preprocessing
@@ -51,7 +60,7 @@ class Multitudinous(torch.nn.Module):
         """
         # TODO: remove this after testing
         point_cloud_features = torch.rand((1, 1000, 768)).to(self.device)
-        rgbd_features = torch.rand((1, 300, 768)).to(self.device)
+        rgbd_features = torch.rand((1, 880, 768)).to(self.device)
         """
 
         # fuse the features using the neck

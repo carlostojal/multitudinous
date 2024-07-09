@@ -16,7 +16,7 @@ class DatasetConfig(Config):
         self.test_path = None
 
         # point cloud specific parameters
-        self.min_points_threshold = None
+        self.num_points = None
         self.n_pcl_classes = None
 
         # camera specific parameters
@@ -36,8 +36,8 @@ class DatasetConfig(Config):
             self.test_path = conf['test_path']
 
             # point cloud specific
-            if 'min_points_threshold' in conf:
-                self.min_points_threshold = conf['min_points_threshold']
+            if 'num_points' in conf:
+                self.num_points = conf['num_points']
             if 'n_pcl_classes' in conf:
                 self.n_pcl_classes = conf['n_pcl_classes']
 
