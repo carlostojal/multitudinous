@@ -1,14 +1,16 @@
-FROM nvidia/cuda:12.2.2-devel-ubuntu22.04
+FROM pytorch/pytorch:2.3.1-cuda12.1-cudnn8-devel
 
-# install python and pip
-RUN apt update
-RUN apt install -y python3 python3-pip git
+ENV DEBIAN_FRONTEND=noninteractive
 
-WORKDIR /
-# install pytorch
-RUN pip3 install torch torchvision torchaudio
+ARG WANDB_API_KEY=none
 
-# copy the app
-RUN mkdir /multitudinous
-COPY . /multitudinous
-WORKDIR /multitudinous
+# update system
+RUN apt-get update && apt-get upgrade -y
+
+# install requirements
+RUN pip install wandb open3d matplotlib numpy opencv-python
+
+# copy the code
+COPY . /workspace
+WORKDIR /workspace
+
