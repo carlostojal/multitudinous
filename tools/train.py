@@ -10,6 +10,8 @@ sys.path.append(".")
 
 from multitudinous.utils.model_builder import build_multitudinous
 from multitudinous.configs.model.ModelConfig import ModelConfig
+from multitudinous.datasets.CARLA import CARLA
+from multitudinous.configs.datasets.DatasetConfig import SubSet
 
 def run_one_epoch(model: nn.Module, optimizer: torch.optim.Optimizer, 
                   loader: DataLoader, device: torch.device,
@@ -25,7 +27,7 @@ def run_one_epoch(model: nn.Module, optimizer: torch.optim.Optimizer,
     loss_total = 0
     acc_total = 0
     curr_sample = 0
-    for i, (pcl, rgbd, grid) in enumerate(loader):
+    for i, (rgbd, pcl, grid) in enumerate(loader):
 
         # transfer the data to the device
         pcl = pcl.to(device)
@@ -115,7 +117,18 @@ if __name__ == "__main__":
     # initialize the optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=config.lr)
 
-    # TODO: load the dataset
+    # load the datasets
+    print("Loading the datasets...", end=" ")
+    train_set = CARLA(config.dataset, subset=SubSet.TRAIN)
+    val_set = CARLA(config.dataset, subset=SubSet.VAL)
+    test_set = CARLA(config.dataset, subset=SubSet.TEST)
+    print("done.")
+
+    print("Creating the data loaders...", end=" ")
+    train_loader = DataLoader(train_set, batch_size=int(config.batch_size), shuffle=True, num_workers=4, pin_memory=True)
+    val_loader = DataLoader(val_set, batch_size=int(config.batch_size), shuffle=False, num_workers=4, pin_memory=True)
+    test_loader = DataLoader(test_set, batch_size=(config.batch_size), shuffle=False, num_workers=4, pin_memory=True)
+    print("done.")
 
     for epoch in range(config.epochs):
 
