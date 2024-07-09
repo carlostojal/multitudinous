@@ -110,6 +110,9 @@ class CARLA(Dataset):
         depth_img = depth_img.float()
         depth_f.close()
 
+        # concatenate the rgb and depth images
+        rgbd = torch.cat((rgb_img, depth_img), dim=0)
+
         # load the lidar file
         lidar_filename = self.lidar[idx]
         lidar = self.get_lidar_data(lidar_filename)
@@ -120,7 +123,7 @@ class CARLA(Dataset):
         gt = torch.from_numpy(gt)
         gt = gt.float()
 
-        return rgb_img, depth_img, lidar, gt
+        return rgbd, lidar, gt
 
 
     def get_lidar_data(self, lidar_filename) -> torch.Tensor:
