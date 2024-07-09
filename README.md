@@ -1,29 +1,53 @@
 # MULTITUDINOUS
 
-Voxel mapping from point clouds and RGB-D images using transformers.
+Voxel occupancy mapping from point clouds and RGB-D images using transformers.
 
-## Installation
+Using a ResNet-based image encoder, NDT-Net point cloud encoder, a ViLBERT-based neck and a deconvolutional head.
 
-## Pre-training backbones
+## Requirements
 
-Pre-training the backbones should make the training of the whole ensemble converge faster, thus being recomended.
+These are the requirements you need to install on your system in order to train and evaluate the models.
 
-### Image Backbone Pre-training
-To have a more interactive process, you can use the Jupyter Notebook provided in `notebooks/pretrain_img.ipynb`. 
+### Bare metal
 
-However, it is recommended to use the `tools/img_pretrain.py` script. To check the parameters accepted by this script, you can call it with the `--help` argument. 
+- Wandb
+- PyTorch
+- Open3D
+- Matplotlib
+- NumPy
+- OpenCV
+- [NDT-Net](https://github.com/carlostojal/NDT-Netpp)
 
-A YAML configuration file exists for each of the implemented variants. Its hyper-parameters, such as batch size, learning rate and optimizer can be changed in that same files. You can create more variants by creating new YAML files based on the provided examples.
+You can install all dependencies except NDT-Net by running the command ```pip install -r requirements.txt```.
 
-There are also a variety of YAML configuration files for the dataset configurations, and function in a similar manner. You can also define new datasets by creating new YAML files based on the provided examples.
+### Docker
 
-Example: `python tools/img_pretrain.py --config multitudinous/configs/pretraining/se_resnet_unet.yaml --dataset multitudinous/configs/datasets/carla.yaml --output weights/img_pretrain`.
+- Docker
 
-### Point Cloud Backbone Pre-training
-Point cloud pre-training is still under implementation.
+If you want to go this way, you will need to build the container and then you can follow the same instructions. Just use the container as a remote terminal.
+
+### Further notes
+
+You will need to log in to your wandb account to be able to log the losses and accuracies. Run the command ```wandb login```.
+
+## Pre-training the backbones
+
+### Image Backbone Pre-Training
+
+- Confirm the dataset configuration (namely the path) is according to your expectations in the ```multitudinous/configs/datasets/xxx.yaml``` configuration file. 
+    - In case you are willing to create/use your own dataset, feel free to create a new file with the same structure.
+
+- Run the command ```python tools/img_pretrain.py --config multitudinous/configs/pretraining/img/se_resnet50_unet.yaml --dataset multitudinous/configs/datasets/carla_rgbd.yaml --output weights/img_pretrain_5k```
+    - The first configuration refers to the model configuration. You can check the others available in that same directory or create a new.
+    - In any case of doubt, run the script with the ```--help``` option.
+
+
+### Point Cloud Backbone Pre-Training
+
+The instructions on pre-training the point cloud backbone are described on its README, available in [here](https://github.com/carlostojal/NDT-Netpp).
 
 ## Training
 
 It is heavily recommended to first pre-train the backbones for the training to converge faster.
 
-The whole model training is still under implementation.
+- Run the command ```python tools/train.py --config multitudinous/configs/model/se_resnet50-ndtnet.yaml --img_backbone_weights /path/to/weights --point_cloud_backbone_weights /path/to/weights```.
