@@ -21,7 +21,7 @@ class CARLA_PCL_SEG(Dataset):
         
         self.root = os.path.join(config.base_path, subdir) # dataset root directory
         self.pcl = [] # file paths list
-        self.min_points_threshold = config.min_points_threshold # randomly remove extra points on each sample
+        self.num_points = config.num_points # randomly remove extra points on each sample
         self.n_classes = config.n_pcl_classes # number of segmentation classes
         
         pcl_files = os.listdir(self.root)
@@ -89,12 +89,12 @@ class CARLA_PCL_SEG(Dataset):
             self.n_points += 1                          # Count the number of points in the point cloud
 
         # verify if the point cloud dimension is smaller than the threshold
-        if len(points) < self.min_points_threshold:
-            raise RuntimeError(f"Expected at least {self.min_points_threshold} points! Got {len(points)}.")
+        if self.n_points < self.num_points:
+            raise RuntimeError(f"Expected at least {self.num_points} points! Got {len(self.n_points)}.")
         
         # remove random points until the threshold is reached
         max_index = len(points) - 1
-        n_points_to_remove = len(points) - self.min_points_threshold
+        n_points_to_remove = len(points) - self.num_points
         for _ in range(n_points_to_remove):
             index_to_remove = randint(0, max_index) # sample a random integer in the range of the point count
             del points[index_to_remove] # remove the point
@@ -103,7 +103,7 @@ class CARLA_PCL_SEG(Dataset):
 
         # sample the points using the farthest point sampling algorithm
         """
-        points = farthest_point_sampling(np.asarray(points), n_points=self.min_points_threshold)
+        points = farthest_point_sampling(np.asarray(points), n_points=self.num_points)
         """
             
         # finally, convert the arrays to tensors
