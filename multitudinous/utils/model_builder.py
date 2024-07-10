@@ -32,7 +32,8 @@ def build_multitudinous(img_backbone_conf: ImgBackboneConfig, point_cloud_backbo
                           point_cloud_backbone=point_cloud_b, 
                           neck=neck, head=head, 
                           num_point_features=point_cloud_backbone_conf.num_point_features,
-                          num_img_features=img_backbone_conf.num_img_features)
+                          num_img_features=img_backbone_conf.num_img_features,
+                          embedding_dim=embedding_dim)
 
     return model
 
@@ -60,7 +61,7 @@ def build_point_cloud_backbone(point_cloud_backbone: PointCloudBackboneConfig, e
     if point_cloud_backbone.name not in point_cloud_backbones:
         raise ValueError(f'Point cloud backbone {point_cloud_backbone.name} not found. Available point cloud backbones are {list(point_cloud_backbones.keys())}.')
     point_cloud_b = point_cloud_backbones[point_cloud_backbone.name](point_dim=point_cloud_backbone.point_dim, 
-                                                                     feature_dim=point_cloud_backbone.feature_dim)
+                                                                     feature_dim=embedding_dim)
     if weights_path is not None:
         point_cloud_b.load_state_dict(torch.load(weights_path))
     return point_cloud_b
