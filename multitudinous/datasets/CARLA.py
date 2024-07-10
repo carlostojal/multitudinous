@@ -119,7 +119,10 @@ class CARLA(Dataset):
         # load the lidar file
         lidar_filename = self.lidar[idx]
         pcd = o3d.io.read_point_cloud(lidar_filename)
-        lidar = pcd.points
+        lidar = np.asarray(pcd.points)
+        # random sampling
+        point_indices = np.random.choice(lidar.shape[0], self.num_points)
+        lidar = lidar[point_indices]
         lidar = torch.from_numpy(lidar)
         lidar = lidar.float()
 
