@@ -24,50 +24,64 @@ def run_one_epoch(model: nn.Module, optimizer: torch.optim.Optimizer,
         model.eval()
 
     # initialize the loss
+    loss = 0
+    acc = 0
     loss_total = 0
     acc_total = 0
-    curr_sample = 0
-    for i, (rgbd, pcl, grid) in enumerate(loader):
 
-        # transfer the data to the device
-        pcl = pcl.to(device)
-        rgbd = rgbd.to(device)
-        grid = grid.to(device)
+    def run_loop(loader: DataLoader):
 
-        # zero the gradients
-        optimizer.zero_grad()
+        curr_sample = 0
+        for i, (rgbd, pcl, grid) in enumerate(loader):
 
-        # forward pass
-        out = model(pcl, rgbd)
+            # transfer the data to the device
+            pcl = pcl.to(device)
+            rgbd = rgbd.to(device)
+            grid = grid.to(device)
 
-        # instantiate the criterion
-        criterion = nn.CrossEntropyLoss(reduction='mean')
+            # zero the gradients
+            optimizer.zero_grad()
 
-        # calculate the loss
-        loss = criterion(out, grid)
+            # forward pass
+            out = model(pcl, rgbd)
 
-        # backpropagation
-        if mode == "train":
-            loss.backward()
-            optimizer.step()
+            # instantiate the criterion
+            criterion = nn.CrossEntropyLoss(reduction='mean')
 
-        # calculate the accuracy. every voxel with more than 0.5 probability is considered occupied
-        acc = ((out > 0.5) == grid).sum().item() / grid.numel()
-        acc_total += acc
+            # calculate the loss
+            loss = criterion(out, grid)
 
-        # accumulate the mean loss per sample
-        loss_total += loss.item()
+            # backpropagation
+            if mode == "train":
+                loss.backward()
+                optimizer.step()
 
-        # increment the current sample
-        curr_sample += loader.batch_size
+            # calculate the accuracy. every voxel with more than 0.5 probability is considered occupied
+            acc = ((out > 0.5) == grid).sum().item() / grid.numel()
+            acc_total += acc
 
-        # print the loss
-        print(f"\r{mode} epoch {epoch+1} ({curr_sample}/{len(loader)*loader.batch_size}): loss={loss.item()}, acc={acc}", end="")
+            # accumulate the mean loss per sample
+            loss_total += loss.item()
 
+            # increment the current sample
+            curr_sample += loader.batch_size
+
+            # print the loss
+            print(f"\r{mode} epoch {epoch+1} ({curr_sample}/{len(loader)*loader.batch_size}): loss={loss.item()}, acc={acc}", end="")
+
+            return loss.item(), acc, loss_total, acc_total
+
+    if mode == "train":
+        loss, acc, loss_total, acc_total = run_loop(loader)
+    else:
+        # disable gradient calculation on validation and test
+        with torch.no_grad():
+            loss, acc, loss_total, acc_total = run_loop(loader)
+    
     avg_loss = loss_total / (len(loader) * loader.batch_size)
     avg_acc = acc_total / (len(loader) * loader.batch_size)
 
-    return loss.item(), avg_loss, acc, avg_acc
+    return loss, avg_loss, acc, avg_acc
 
 
 # Run the training
