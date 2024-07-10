@@ -27,7 +27,7 @@ def run_one_epoch(model: nn.Module, optimizer: torch.optim.Optimizer,
     loss_total = 0
     acc_total = 0
     curr_sample = 0
-    for i, (rgbd, lidar, grid) in enumerate(loader):
+    for i, (rgbd, pcl, grid) in enumerate(loader):
 
         # transfer the data to the device
         pcl = pcl.to(device)
@@ -107,7 +107,13 @@ if __name__ == "__main__":
 
     # build the model
     print("Building the model...", end=" ")
-    model = build_multitudinous(config.img_backbone, config.point_cloud_backbone, config.neck, config.head, args.img_backbone_weights, args.point_cloud_backbone_weights)
+    model = build_multitudinous(img_backbone_conf=config.img_backbone, 
+                                point_cloud_backbone_conf=config.point_cloud_backbone, 
+                                neck_conf=config.neck, 
+                                head_conf=config.head, 
+                                img_backbone_weights_path=args.img_backbone_weights, 
+                                point_cloud_backbone_weights_path=args.point_cloud_backbone_weights, 
+                                embedding_dim=config.embedding_dim)
     print("done.")
 
     # initialize wandb
@@ -121,7 +127,19 @@ if __name__ == "__main__":
 
     # transfer the model to the cpu
     model.to(device)
-    print(model)
+    # print(model)
+
+    n_img_params = sum(p.numel() for p in model.img_backbone.parameters() if p.requires_grad)
+    n_pcl_params = sum(p.numel() for p in model.point_cloud_backbone.parameters() if p.requires_grad)
+    n_neck_params = sum(p.numel() for p in model.neck.parameters() if p.requires_grad)
+    n_head_params = sum(p.numel() for p in model.head.parameters() if p.requires_grad)
+    n_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+    print(f"Image backbone params: {n_img_params}")
+    print(f"Point cloud backbone params: {n_pcl_params}")
+    print(f"Neck params: {n_neck_params}")
+    print(f"Head params: {n_head_params}")
+    print(f"Total params: {n_total_params}")
 
     # initialize the optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=config.lr)
@@ -135,9 +153,9 @@ if __name__ == "__main__":
 
     print("Creating the data loaders...", end=" ")
     generator = torch.Generator(device=device)
-    train_loader = DataLoader(train_set, batch_size=int(config.batch_size), shuffle=True, num_workers=4, pin_memory=True, generator=generator)
-    val_loader = DataLoader(val_set, batch_size=int(config.batch_size), shuffle=False, num_workers=4, pin_memory=True, generator=generator)
-    test_loader = DataLoader(test_set, batch_size=(config.batch_size), shuffle=False, num_workers=4, pin_memory=True, generator=generator)
+    train_loader = DataLoader(train_set, batch_size=int(config.batch_size), shuffle=True, num_workers=1, pin_memory=True, generator=generator, persistent_workers=True)
+    val_loader = DataLoader(val_set, batch_size=int(config.batch_size), shuffle=False, num_workers=1, pin_memory=True, generator=generator, persistent_workers=True)
+    test_loader = DataLoader(test_set, batch_size=(config.batch_size), shuffle=False, num_workers=1, pin_memory=True, generator=generator, persistent_workers=True)
     print("done.")
 
     for epoch in range(config.epochs):
