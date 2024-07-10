@@ -11,7 +11,7 @@ sys.path.append(".")
 from multitudinous.utils.model_builder import build_multitudinous
 from multitudinous.configs.model.ModelConfig import ModelConfig
 from multitudinous.datasets.CARLA import CARLA
-from multitudinous.configs.datasets.DatasetConfig import SubSet
+from multitudinous.configs.datasets.DatasetConfig import SubSet, DatasetConfig
 
 def run_one_epoch(model: nn.Module, optimizer: torch.optim.Optimizer, 
                   loader: DataLoader, device: torch.device,
@@ -27,7 +27,7 @@ def run_one_epoch(model: nn.Module, optimizer: torch.optim.Optimizer,
     loss_total = 0
     acc_total = 0
     curr_sample = 0
-    for i, (rgbd, pcl, grid) in enumerate(loader):
+    for i, (rgbd, lidar, grid) in enumerate(loader):
 
         # transfer the data to the device
         pcl = pcl.to(device)
@@ -86,6 +86,7 @@ if __name__ == "__main__":
     parser.add_argument('--config', type=str, default='multitudinous/configs/model/se_resnet50-ndtnet.yaml', help='Path to the model YAML configuration file.')
     parser.add_argument('--img_backbone_weights', type=str, default=None, help='Path to the weights of the image backbone')
     parser.add_argument('--point_cloud_backbone_weights', type=str, default=None, help='Path to the weights of the point cloud backbone')
+    parser.add_argument('--dataset', type=str, default='multitudinous/configs/datasets/carla.yaml')
     parser.add_argument('--output', type=str, default='output', help='Path to save the model')
     parser.add_argument('--save_every', type=int, default=1, help='Save the model every n epochs')
     args = parser.parse_args()
@@ -95,8 +96,14 @@ if __name__ == "__main__":
     config = ModelConfig()
     config.parse_from_file(args.config)
     print("done.")
-
     print(config)
+
+    # parse the dataset configuration file
+    print("Parsing dataset configurations...", end=" ")
+    ds_config: DatasetConfig = DatasetConfig()
+    ds_config.parse_from_file(args.dataset)
+    print("done.")
+    print(ds_config)
 
     # build the model
     print("Building the model...", end=" ")
@@ -104,11 +111,13 @@ if __name__ == "__main__":
     print("done.")
 
     # initialize wandb
+    """
     print("Initializing wandb...", end=" ")
     wandb.init(project="multitudinous", 
                name=f"multitudinous_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}",
                config=config)
     print("done.")
+    """
 
     # transfer the model to the cpu
     model.to(device)
@@ -119,15 +128,16 @@ if __name__ == "__main__":
 
     # load the datasets
     print("Loading the datasets...", end=" ")
-    train_set = CARLA(config.dataset, subset=SubSet.TRAIN)
-    val_set = CARLA(config.dataset, subset=SubSet.VAL)
-    test_set = CARLA(config.dataset, subset=SubSet.TEST)
+    train_set = CARLA(ds_config, subset=SubSet.TRAIN)
+    val_set = CARLA(ds_config, subset=SubSet.VAL)
+    test_set = CARLA(ds_config, subset=SubSet.TEST)
     print("done.")
 
     print("Creating the data loaders...", end=" ")
-    train_loader = DataLoader(train_set, batch_size=int(config.batch_size), shuffle=True, num_workers=4, pin_memory=True)
-    val_loader = DataLoader(val_set, batch_size=int(config.batch_size), shuffle=False, num_workers=4, pin_memory=True)
-    test_loader = DataLoader(test_set, batch_size=(config.batch_size), shuffle=False, num_workers=4, pin_memory=True)
+    generator = torch.Generator(device=device)
+    train_loader = DataLoader(train_set, batch_size=int(config.batch_size), shuffle=True, num_workers=4, pin_memory=True, generator=generator)
+    val_loader = DataLoader(val_set, batch_size=int(config.batch_size), shuffle=False, num_workers=4, pin_memory=True, generator=generator)
+    test_loader = DataLoader(test_set, batch_size=(config.batch_size), shuffle=False, num_workers=4, pin_memory=True, generator=generator)
     print("done.")
 
     for epoch in range(config.epochs):
@@ -136,12 +146,12 @@ if __name__ == "__main__":
 
         # train the model
         train_loss, train_loss_mean, train_acc, train_acc_mean = run_one_epoch(model, optimizer, train_loader, device, epoch, mode="train")
-        wandb.log({"epoch": epoch+1, "train_loss": train_loss, "train_loss_mean": train_loss_mean, "train_acc": train_acc, "train_acc_mean": train_acc_mean})
+        #wandb.log({"epoch": epoch+1, "train_loss": train_loss, "train_loss_mean": train_loss_mean, "train_acc": train_acc, "train_acc_mean": train_acc_mean})
         print()
 
         # validation
         val_loss, val_loss_mean, val_acc, val_acc_mean = run_one_epoch(model, optimizer, val_loader, device, epoch, mode="validation")
-        wandb.log({"epoch": epoch+1, "val_loss": val_loss, "val_loss_mean": val_loss_mean, "val_acc": val_acc, "val_acc_mean": val_acc_mean})
+        #wandb.log({"epoch": epoch+1, "val_loss": val_loss, "val_loss_mean": val_loss_mean, "val_acc": val_acc, "val_acc_mean": val_acc_mean})
         print()
 
         # save the model (and the backbones, neck and head individually)
@@ -156,7 +166,7 @@ if __name__ == "__main__":
     # test
     print("*** TESTING ***")
     test_loss, test_loss_mean, test_acc, test_acc_mean = run_one_epoch(model, optimizer, test_loader, device, epoch, mode="test")
-    wandb.log({"epoch": epoch+1, "test_loss": test_loss, "test_loss_mean": test_loss_mean, "test_acc": test_acc, "test_acc_mean": test_acc_mean})
+    #wandb.log({"epoch": epoch+1, "test_loss": test_loss, "test_loss_mean": test_loss_mean, "test_acc": test_acc, "test_acc_mean": test_acc_mean})
     print()
 
     # finish
