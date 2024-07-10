@@ -32,7 +32,9 @@ def run_one_epoch(model: nn.Module, optimizer: torch.optim.Optimizer,
     def run_loop(loader: DataLoader):
 
         curr_sample = 0
+        acc = 0
         acc_total = 0
+        loss = 0
         loss_total = 0
         for i, (rgbd, pcl, grid) in enumerate(loader):
 
@@ -71,7 +73,7 @@ def run_one_epoch(model: nn.Module, optimizer: torch.optim.Optimizer,
             # print the loss
             print(f"\r{mode} epoch {epoch+1} ({curr_sample}/{len(loader)*loader.batch_size}): loss={loss.item()}, acc={acc}", end="")
 
-            return loss.item(), acc, loss_total, acc_total
+        return loss.item(), acc, loss_total, acc_total
 
     if mode == "train":
         loss, acc, loss_total, acc_total = run_loop(loader)
