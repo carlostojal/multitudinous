@@ -1,0 +1,23 @@
+{
+    "name": "MULTITUDINOUS",
+    "build": {
+        "context": "..",
+        "dockerfile": "../Dockerfile"
+    },
+
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+    "workspaceFolder": "/workspace",
+
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-azuretools.vscode-docker",
+                "ms-python.python"
+            ]
+        }
+    },
+
+    "mounts": [
+        "source=/media/multitudinous/WD_BLACK,target=/data,type=bind"
+    ]
+}
