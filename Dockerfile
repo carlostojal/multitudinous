@@ -8,7 +8,16 @@ ARG WANDB_API_KEY=none
 RUN apt-get update && apt-get upgrade -y
 
 # install build-essential
-RUN apt install build-essential libgsl-dev libx11-6 -y
+RUN apt install -y \
+    build-essential \
+    git \
+    libgsl-dev \
+    libx11-6 \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev
 
 # install requirements
 RUN pip install wandb open3d matplotlib numpy opencv-python
