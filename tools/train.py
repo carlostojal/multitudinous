@@ -32,6 +32,8 @@ def run_one_epoch(model: nn.Module, optimizer: torch.optim.Optimizer,
     def run_loop(loader: DataLoader):
 
         curr_sample = 0
+        acc_total = 0
+        loss_total = 0
         for i, (rgbd, pcl, grid) in enumerate(loader):
 
             # transfer the data to the device
