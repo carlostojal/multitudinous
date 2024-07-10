@@ -117,13 +117,11 @@ if __name__ == "__main__":
     print("done.")
 
     # initialize wandb
-    """
     print("Initializing wandb...", end=" ")
     wandb.init(project="multitudinous", 
                name=f"multitudinous_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}",
                config=config)
     print("done.")
-    """
 
     # transfer the model to the cpu
     model.to(device)
@@ -164,12 +162,12 @@ if __name__ == "__main__":
 
         # train the model
         train_loss, train_loss_mean, train_acc, train_acc_mean = run_one_epoch(model, optimizer, train_loader, device, epoch, mode="train")
-        #wandb.log({"epoch": epoch+1, "train_loss": train_loss, "train_loss_mean": train_loss_mean, "train_acc": train_acc, "train_acc_mean": train_acc_mean})
+        wandb.log({"epoch": epoch+1, "train_loss": train_loss, "train_loss_mean": train_loss_mean, "train_acc": train_acc, "train_acc_mean": train_acc_mean})
         print()
 
         # validation
         val_loss, val_loss_mean, val_acc, val_acc_mean = run_one_epoch(model, optimizer, val_loader, device, epoch, mode="validation")
-        #wandb.log({"epoch": epoch+1, "val_loss": val_loss, "val_loss_mean": val_loss_mean, "val_acc": val_acc, "val_acc_mean": val_acc_mean})
+        wandb.log({"epoch": epoch+1, "val_loss": val_loss, "val_loss_mean": val_loss_mean, "val_acc": val_acc, "val_acc_mean": val_acc_mean})
         print()
 
         # save the model (and the backbones, neck and head individually)
@@ -184,7 +182,7 @@ if __name__ == "__main__":
     # test
     print("*** TESTING ***")
     test_loss, test_loss_mean, test_acc, test_acc_mean = run_one_epoch(model, optimizer, test_loader, device, epoch, mode="test")
-    #wandb.log({"epoch": epoch+1, "test_loss": test_loss, "test_loss_mean": test_loss_mean, "test_acc": test_acc, "test_acc_mean": test_acc_mean})
+    wandb.log({"epoch": epoch+1, "test_loss": test_loss, "test_loss_mean": test_loss_mean, "test_acc": test_acc, "test_acc_mean": test_acc_mean})
     print()
 
     # finish
