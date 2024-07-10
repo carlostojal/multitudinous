@@ -3,6 +3,6 @@ base_path: /data/DataSets_200x200x16/DayClear
 train_path: train
 val_path: validation
 test_path: test
-num_points: 60000
-img_width: 1280
-img_height: 704
+num_points: 2540
+img_width: 512
+img_height: 512
