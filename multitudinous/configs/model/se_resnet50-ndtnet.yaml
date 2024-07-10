@@ -1,6 +1,6 @@
 name: se_resnet50-ndtnet
 batch_size: 2
-epochs: 200
+epochs: 300
 embedding_dim: 768
 sequence_len: 2048
 lr: 0.001

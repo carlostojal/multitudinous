@@ -18,7 +18,7 @@
             "request": "launch",
             "program": "tools/train.py",
             "console": "integratedTerminal",
-            "args": "--config multitudinous/configs/model/se_resnet50-ndtnet.yaml"
+            "args": "--config multitudinous/configs/model/se_resnet50-ndtnet.yaml --output /data/final_weights"
         },
         {
             "name": "Pre-train SE-ResNet-50-UNet",
