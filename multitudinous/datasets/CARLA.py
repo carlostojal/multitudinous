@@ -4,6 +4,7 @@ import os
 from PIL import Image
 from ..configs.datasets.DatasetConfig import DatasetConfig, SubSet
 import numpy as np
+import open3d as o3d
 
 BIT_PRECISION_16 = (2**16)-1
 
@@ -21,7 +22,8 @@ class CARLA(Dataset):
             raise ValueError(f"Invalid subset {subset}")
         
         self.root = os.path.join(config.base_path, subdir) # dataset root directory
-        self.num_point_samples = config.num_point_samples # number of points to sample from the point cloud
+        self.num_points = config.num_points # number of points to sample from the point cloud
+        self.img_shape = (config.img_height, config.img_width)
 
         # load the lidar files from "root/pcl" to a list
         self.lidar = [] # point cloud file paths list
@@ -60,12 +62,12 @@ class CARLA(Dataset):
             self.gt.append(os.path.join(fullpath, file))
 
     def __len__(self):
-        return len(min(self.pcl, self.rgb, self.depth, self.gt))
+        return len(min(self.lidar, self.rgb, self.depth, self.gt))
 
     def __getitem__(self, idx):
 
         # check bounds
-        if id >= len (self.pcl) or idx >= len(self.rgb) or idx >= len(self.depth) or idx < 0:
+        if idx >= len (self.lidar) or idx >= len(self.rgb) or idx >= len(self.depth) or idx >= len(self.gt) or idx < 0:
             return
 
         rgb_filename = self.rgb[idx]
@@ -79,7 +81,7 @@ class CARLA(Dataset):
             return
         rgb_img = Image.open(rgb_f)
         # resize the image to shape
-        rgb_img = rgb_img.resize(self.shape)
+        rgb_img = rgb_img.resize(self.img_shape)
         rgb_img = np.array(rgb_img, dtype=np.float32)
         rgb_img = rgb_img / 255.0
         rgb_img = torch.from_numpy(rgb_img)
@@ -103,11 +105,12 @@ class CARLA(Dataset):
             return
         depth_img = Image.open(depth_f)
         # resize the image to shape
-        depth_img = depth_img.resize(self.shape)
+        depth_img = depth_img.resize(self.img_shape)
         depth_img = np.array(depth_img, dtype=np.float32)
         depth_img = depth_img / BIT_PRECISION_16
         depth_img = torch.from_numpy(depth_img)
         depth_img = depth_img.float()
+        depth_img = depth_img.unsqueeze(0) # add the channel dimension for concatenation
         depth_f.close()
 
         # concatenate the rgb and depth images
@@ -115,7 +118,10 @@ class CARLA(Dataset):
 
         # load the lidar file
         lidar_filename = self.lidar[idx]
-        lidar = self.get_lidar_data(lidar_filename)
+        pcd = o3d.io.read_point_cloud(lidar_filename)
+        lidar = pcd.points
+        lidar = torch.from_numpy(lidar)
+        lidar = lidar.float()
 
         # load the ground truth file
         gt_filename = self.gt[idx]

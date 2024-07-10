@@ -1,7 +1,9 @@
 name: se_resnet50-ndtnet
 batch_size: 4
+epochs: 200
 embedding_dim: 1024
 sequence_len: 2048
+lr: 0.001
 img_backbone:
   name: se_resnet50
   in_channels: 4
@@ -13,7 +15,7 @@ point_cloud_backbone:
   num_points: 60000
   num_point_features: 1000
   point_dim: 3
-  feature_dim: 768
+  feature_dim: 1024
 neck:
   name: vilbert
 head:
