@@ -16,9 +16,9 @@
             "name": "Train MULTITUDINOUS",
             "type": "debugpy",
             "request": "launch",
-            "program": "tools/train.py --config multitudinous/configs/model/se_resnet50-ndtnet.yaml",
+            "program": "tools/train.py",
             "console": "integratedTerminal",
-            "args": ""
+            "args": "--config multitudinous/configs/model/se_resnet50-ndtnet.yaml"
         },
         {
             "name": "Pre-train SE-ResNet-50-UNet",

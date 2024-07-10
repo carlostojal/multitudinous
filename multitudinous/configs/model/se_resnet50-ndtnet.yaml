@@ -1,7 +1,9 @@
 name: se_resnet50-ndtnet
-batch_size: 4
-embedding_dim: 1024
+batch_size: 2
+epochs: 200
+embedding_dim: 768
 sequence_len: 2048
+lr: 0.001
 img_backbone:
   name: se_resnet50
   in_channels: 4
@@ -10,7 +12,7 @@ img_backbone:
   num_img_features: 300
 point_cloud_backbone:
   name: ndtnet
-  num_points: 60000
+  num_points: 2000
   num_point_features: 1000
   point_dim: 3
   feature_dim: 768

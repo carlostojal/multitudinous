@@ -91,7 +91,7 @@ class TransformerHead(nn.Module):
 
             raise NotImplementedError("Cone decoder is not implemented yet.")
 
-    def __init__(self, embedding_dim: int = 768, num_heads: int = 12, num_layers: int = 12, task: Task = Task.GRID) -> None:
+    def __init__(self, embedding_dim: int = 768, num_heads: int = 16, num_layers: int = 6, task: Task = Task.GRID) -> None:
         super().__init__()
 
         # initialize the decoder

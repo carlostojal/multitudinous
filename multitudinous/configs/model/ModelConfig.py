@@ -51,6 +51,7 @@ class HeadConfig:
 class ModelConfig(Config):
 
     def __init__(self, name: str = None, batch_size: int = None,
+                 epochs: int = None, lr: float = None,
                  embedding_dim: int = None, sequence_len: int = None,
                  img_backbone: ImgBackboneConfig = None,
                  point_cloud_backbone: PointCloudBackboneConfig = None,
@@ -58,6 +59,8 @@ class ModelConfig(Config):
                  head: HeadConfig = None) -> None:
         self.name = name
         self.batch_size = batch_size
+        self.epochs = epochs
+        self.lr = lr
         self.embedding_dim = embedding_dim
         self.sequence_len = sequence_len
         self.img_backbone = img_backbone
@@ -73,6 +76,9 @@ class ModelConfig(Config):
             conf = yaml.safe_load(f)
 
             self.name = conf['name']
+            self.batch_size = conf['batch_size']
+            self.epochs = conf['epochs']
+            self.lr = conf['lr']
             self.embedding_dim = conf['embedding_dim']
             self.sequence_len = conf['sequence_len']
 
