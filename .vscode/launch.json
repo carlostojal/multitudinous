@@ -16,7 +16,7 @@
             "name": "Train MULTITUDINOUS",
             "type": "debugpy",
             "request": "launch",
-            "program": "tools/train.py --config multitudinous/configs/model/se_resnet50-ndtnet.yaml",
+            "program": "tools/train.py --config multitudinous/configs/model/se_resnet50-ndtnet.yaml --img_backbone_weights /data/weights/img/img_backbone_30.pth --point_cloud_backbone_weights /data/weights/point_cloud/ndtnet_segmentation_backbone_92.pth",
             "console": "integratedTerminal",
             "args": ""
         },
