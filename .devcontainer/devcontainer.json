@@ -23,7 +23,8 @@
     ],
 
     "mounts": [
-        "source=/media/multitudinous/WD_BLACK,target=/data,type=bind",
+        /*"source=/media/multitudinous/WD_BLACK,target=/data,type=bind",*/
+        "source=/home/carlostojal/Documents/LabRob/MULTITUDINOUS/data,target=/data,type=bind",
         "source=/tmp/.X11-unix/,target=/tmp/.X11-unix/,type=bind"
     ],
 
